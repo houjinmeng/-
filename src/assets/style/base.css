@@ -1,0 +1,110 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+html,
+body,
+#app,
+ul {
+  height: 100%;
+}
+.left {
+  float: left;
+}
+.right {
+  float: right;
+}
+#head {
+  background-color: #04152a;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#head a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  width: 100px;
+  margin-right: 10px;
+  margin-left: 50px;
+}
+#head a .logo {
+  width: 20px;
+  height: 40px;
+  background-color: #fff;
+}
+#head a .Eglish_name {
+  font-size: 8px;
+}
+#head .line {
+  font-size: 25px;
+  margin-right: 10px;
+  margin-top: 4px;
+}
+#head .btn {
+  font-size: 15px;
+  margin-right: 210px;
+}
+#foot {
+  background-color: #383d41;
+  height: 210px;
+  padding: 20px 80px;
+  box-sizing: border-box;
+}
+#foot .top_box {
+  border-bottom: 1px solid #fff;
+  overflow: hidden;
+  padding-bottom: 30px;
+  padding-left: 230px;
+}
+#foot ul {
+  list-style: none;
+  float: left;
+  margin-left: 170px;
+}
+#foot ul ul:last-child {
+  margin-right: 0;
+}
+#foot ul a {
+  text-decoration: none;
+  color: #fff;
+}
+#foot ul li {
+  color: #fff;
+  font-size: 10px;
+  margin-top: 10px;
+}
+#foot ul li:first-child {
+  font-size: 15px;
+}
+#foot .bot_box {
+  text-align: center;
+  font-size: 12px;
+  color: #fff;
+  line-height: 30px;
+}
+.top_search {
+  display: flex;
+  height: 50px;
+}
+.top_search li {
+  list-style: none;
+  margin-right: 40px;
+}
+.top_search li input {
+  height: 36px;
+  font-size: 16px;
+  border: 1px solid #dcdfe6;
+  padding-left: 10px;
+}
+.top_search .rili {
+  display: flex;
+  justify-content: space-between;
+}
+.top_search .btn {
+  background-color: #15a46c;
+  color: #fff;
+  width: 100px;
+  height: 40px;
+}
