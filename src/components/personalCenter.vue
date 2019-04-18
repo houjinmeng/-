@@ -2,6 +2,7 @@
   <el-container>
     <!-- 头部 -->
     <el-header style="height:280px;padding:0">
+      <img src="../assets/img/bgc2.jpg" alt="" style="width:100%;height:280px">
       <div id="head" style="height:80px;background: rgba(0, 0, 0, 0.5);">
         <!-- 左侧logo部分 -->
         <div>
@@ -132,9 +133,14 @@ export default {
           children: [
             {
               id: 11,
-              authName: '数据统计',
+              authName: '投放统计',
               path: 'statistics',
               children: []
+            },
+            {
+              id: 12,
+              authName: '营销号统计',
+              path: 'marketing'
             }
           ]
         },
@@ -144,7 +150,7 @@ export default {
           path: null,
           children: [
             {
-              id: 12,
+              id: 13,
               authName: '基本设置',
               path: 'mySettings',
               children: []
@@ -157,6 +163,10 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+.el-header{
+  height:280px;
+  padding:0;
+}
 // 侧边导航样式
 .el-container {
   height: 100%;

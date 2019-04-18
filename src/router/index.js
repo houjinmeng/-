@@ -8,6 +8,7 @@ import Check from '@/components/Check'
 import PutRecord from '@/components/PutRecord'
 import Statistics from '@/components/Statistics'
 import MySettings from '@/components/MySettings'
+import Marketing from '@/components/Marketing'
 
 Vue.use(Router)
 
@@ -24,7 +25,8 @@ export default new Router({
         { path: '/check', component: Check },
         { path: '/putRecord', component: PutRecord },
         { path: '/statistics', component: Statistics },
-        { path: '/mySettings', component: MySettings }
+        { path: '/mySettings', component: MySettings },
+        { path: '/marketing', component: Marketing }
       ]
     }
   ]

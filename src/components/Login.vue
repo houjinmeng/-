@@ -23,7 +23,7 @@
       <div>
         <input type="text" placeholder="请输入城市，设备名称，商场">
         <button class="search">搜索</button>
-        <button class="list">默认列表</button>
+        <button class="list" @click="defaultList">默认列表</button>
       </div>
     </div>
     <!-- 底部 -->
@@ -68,17 +68,22 @@
 export default {
   data() {
     return {
+      // 二维码窗口显示隐藏
       showLogin: false,
-      wx_url: '',
-      appid: '',
-      dialogVisible: false,
-      searchKey: '' // 搜索关键字
+      // 接收二维码
+      weixin: []
     }
   },
   methods: {
     //  登录
     login() {
       this.showLogin = true
+      this.$http.get('/wx_qrcode').then(res => {
+        console.log(res)
+      })
+    },
+    defaultList() {
+      this.$router.push('/machine')
     }
     // // 微信登陆
     // async InWeChat() {
@@ -94,7 +99,6 @@ export default {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="less" scoped>
 // 中间部分样式
 .content {
@@ -140,6 +144,7 @@ export default {
       border: none;
       position: absolute;
       left: 484px;
+      cursor: pointer;
     }
     .list {
       width: 112px;
@@ -148,10 +153,11 @@ export default {
       border: none;
       position: absolute;
       right: 16px;
+      cursor: pointer;
     }
   }
 }
-// 登录扫描二维码
+// 登录扫描二维码弹框
 #loginDialog {
   width: 100%;
   height: 100%;

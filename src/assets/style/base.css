@@ -44,7 +44,8 @@ ul {
 }
 #head .btn {
   font-size: 15px;
-  margin-right: 210px;
+  margin-right: 100px;
+  cursor: pointer;
 }
 #foot {
   background-color: #383d41;
@@ -107,4 +108,7 @@ ul {
   color: #fff;
   width: 100px;
   height: 40px;
+}
+.el-pagination {
+  margin: 50px 0;
 }
