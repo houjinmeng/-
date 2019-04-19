@@ -1,10 +1,10 @@
 <template>
-  <div>
+  <div style="text-align:center">
     <!-- 头部搜索区域 -->
     <ul class="top_search">
       <li>
         审核状态：
-        <el-select placeholder="请选择" v-model="value">
+        <el-select placeholder="请选择" v-model="tableList.keyword.status">
           <el-option
             v-for="item in options"
             :key="item.value"
@@ -34,18 +34,23 @@
         </div>
       </li>
       <li>
-        <el-button class="btn">搜索</el-button>
+        <el-button class="btn" @click="search">搜索</el-button>
       </li>
     </ul>
     <!-- 订单表格数据展示 -->
     <el-table :data="tableData" stripe style="width: 100%">
       <el-table-column label="序号" type="index" width="150" align="center"></el-table-column>
       <el-table-column prop="machine_name" label="设备名称" width="150" align="center"></el-table-column>
-      <el-table-column prop="machine_address" label="设备地点" width="300" align="center"></el-table-column>
+      <el-table-column prop="machine_address" label="设备地点" align="center"></el-table-column>
       <el-table-column label="投放时间" align="center">
         <template slot-scope="info">
           <span>{{info.row.start_time*1000|formatDate}}</span>-
           <span>{{info.row.end_time*1000|formatDate}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="创建时间" align="center">
+        <template slot-scope="info">
+          <span>{{info.row.create_time*1000|formatDate}}</span>
         </template>
       </el-table-column>
       <el-table-column prop="order_amount" label="金额（元）" align="center"></el-table-column>
@@ -61,11 +66,18 @@
             size="mini"
             style="background-color:#186fb2;color:#fff"
             @click="payDialog(info.row.id)"
-            v-show="showBtn"
+            v-if="info.row.is_press===0"
           >催办</el-button>
         </template>
       </el-table-column>
     </el-table>
+    <!-- 数据分页展示 -->
+    <el-pagination
+      @current-change="handleCurrentChange"
+      background
+      layout="prev, pager, next"
+      :total="this.tot"
+    ></el-pagination>
   </div>
 </template>
 
@@ -79,7 +91,7 @@ export default {
   filters: {
     formatDate(time) {
       var date = new Date(time)
-      return formatDate(date, 'yyyy年MM月dd日') // 年月日 格式自己定义   'yyyy : MM : dd'  例 2018年12月5日的格式
+      return formatDate(date, 'yyyy.MM.dd') // 年月日 格式自己定义   'yyyy : MM : dd'  例 2018年12月5日的格式
     },
     formatDateTwo(time) {
       var date = new Date(time)
@@ -88,9 +100,9 @@ export default {
   },
   data() {
     return {
-      // 催办按钮显示隐藏
-      showBtn: false,
-      // 下拉日历的数据
+      // 总记录数据条数
+      tot: 20,
+      // 接收日历值
       value1: '',
       value2: '',
       value3: '',
@@ -98,19 +110,26 @@ export default {
       // 审核状态下拉框数据
       options: [
         {
-          value: '0',
+          value: '',
           label: '全部'
         },
         {
+          value: '0',
+          label: '未审核'
+        },
+        {
           value: '1',
-          label: '已支付'
+          label: '审核中'
         },
         {
           value: '2',
-          label: '未支付'
+          label: '审核失败'
+        },
+        {
+          value: '3',
+          label: '审核成功'
         }
       ],
-      value: '',
       // 获取订单列表所需参数
       tableList: {
         token: '',
@@ -128,6 +147,14 @@ export default {
     }
   },
   methods: {
+    /**  数据分页相关1 */
+    // 当前页码变化的回调处理
+    handleCurrentChange(arg) {
+      this.tableList.page = arg
+      // 根据变化后的页码重新获得数据
+      this.getCheckList()
+    },
+    // 获取审核列表数据
     getCheckList() {
       this.$http
         .post('/check_list', JSON.stringify(this.tableList))
@@ -145,7 +172,16 @@ export default {
             }
           })
           this.tableData = data
+          this.tot = this.tableData.length
         })
+    },
+    // 按需搜所
+    search() {
+      this.tableList.keyword.start_time = this.value1 / 1000
+      this.tableList.keyword.end_time = this.value2 / 1000
+      this.tableList.keyword.create_start_time = this.value3 / 1000
+      this.tableList.keyword.create_end_time = this.value4 / 1000
+      this.getCheckList()
     }
   }
 }

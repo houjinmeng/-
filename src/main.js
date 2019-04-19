@@ -4,6 +4,8 @@ import router from './router'
 import axios from 'axios'
 // 引入global.css全局样式控制文件
 import './assets/style/base.css'
+// 引入“图标”css样式文件
+import './assets/fonts/iconfont.css'
 // 导入element-ui组件库并注册给vue
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'

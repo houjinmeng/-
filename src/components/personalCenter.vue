@@ -2,8 +2,11 @@
   <el-container>
     <!-- 头部 -->
     <el-header style="height:280px;padding:0">
-      <img src="../assets/img/bgc2.jpg" alt="" style="width:100%;height:280px">
-      <div id="head" style="height:80px;background: rgba(0, 0, 0, 0.5);">
+      <img src="../assets/img/bgc2.png" alt width="100%" height="280px">
+      <div
+        id="head"
+        style="height:80px;width:100%;background: rgba(0, 0, 0, 0.5);position: absolute;top:0"
+      >
         <!-- 左侧logo部分 -->
         <div>
           <a href class="left">
@@ -32,13 +35,13 @@
           :collapse-transition="false"
           :router="true"
         >
-          <el-submenu :index="item.id+''" v-for="(item) in menuList" :key="item.id">
+          <el-submenu :index="item.id+''" v-for="(item,k) in menuList" :key="item.id">
             <template slot="title">
-              <i></i>
+              <i :class="'iconfont icon-'+menuicon[k]"></i>
               <span>{{item.authName}}</span>
             </template>
             <el-menu-item :index="item2.path" v-for="item2 in item.children" :key="item2.id">
-              <i></i>
+              <i style="margin-right:10px"></i>
               <span>{{item2.authName}}</span>
             </el-menu-item>
           </el-submenu>
@@ -151,21 +154,29 @@ export default {
           children: [
             {
               id: 13,
-              authName: '基本设置',
+              authName: '绑定手机号',
               path: 'mySettings',
               children: []
             }
           ]
         }
+      ],
+      // 设置左侧权限的图标
+      menuicon: [
+        'wodedingdan02',
+        'shenhe',
+        'JLTJ',
+        'shuju',
+        'shezhi'
       ]
     }
   }
 }
 </script>
 <style lang="less" scoped>
-.el-header{
-  height:280px;
-  padding:0;
+.el-header {
+  height: 280px;
+  padding: 0;
 }
 // 侧边导航样式
 .el-container {
