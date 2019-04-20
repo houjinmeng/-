@@ -2,7 +2,11 @@
   <div style="text-align:center">
     <!-- 头部 -->
     <header>
-      <div id="head" style="height:80px;background: rgba(0, 0, 0, 0.5);">
+      <img src="../assets/img/bgc2.png" alt width="100%" height="280px">
+      <div
+        id="head"
+        style="height:80px;width:100%;background: rgba(0, 0, 0, 0.5);position: absolute;top:0"
+      >
         <!-- 左侧logo部分 -->
         <div>
           <a href class="left">
@@ -40,7 +44,7 @@
         <el-table-column prop="px" label="屏幕比例" align="center"></el-table-column>
         <el-table-column prop="count_down" label="剩余时长" align="center"></el-table-column>
       </el-table>
-      <el-button id="shopping" size="small">购买</el-button>
+      <el-button id="shopping" size="small" @click="shopping">购买</el-button>
       <!-- 数据分页展示 -->
       <el-pagination
         @current-change="handleCurrentChange"
@@ -89,6 +93,11 @@ export default {
   },
   data() {
     return {
+      // 点击购买要传的参
+      buy: {
+        token: '',
+        machine_ids: ''
+      },
       // 总记录数据条数
       tot: 20,
       // 获取列表数据要传的参
@@ -100,10 +109,11 @@ export default {
       tableData: [],
       checkAll: false,
       isIndeterminate: false,
-      multipleSelection: [],
       currentPage: 1,
       pagesize: 10,
-      page: 1
+      page: 1,
+      // 接收选中设备id
+      machine_id: []
     }
   },
   methods: {
@@ -128,29 +138,47 @@ export default {
     getRowKeys(row) {
       return row.number
     },
-    // toggleSelection(rows) {
-    //   if (rows) {
-    //     rows.forEach(row => {
-    //       this.$refs.multipleTable.toggleRowSelection(row)
-    //     })
-    //   } else {
-    //     this.$refs.multipleTable.clearSelection()
-    //   }
-    // },
+    // 多选框回调事件
     handleSelectionChange(val) {
+      for (let i = 0; i < val.length; i++) {
+        if (this.machine_id.indexOf(val[i].machine_id) === -1) {
+          this.machine_id.push(val[i].machine_id)
+        } else {
+          let index = this.machine_id.indexOf(val[i].machine_id)
+          this.machine_id.splice(index, 1)
+        }
+      }
+      console.log(this.machine_id)
       let vlength = val.length
-      this.multipleSelection = val
       this.checkAll = vlength === this.pagesize
       this.isIndeterminate = vlength > 0 && vlength < this.pagesize
     },
+    // 点击全选
     handleCheckAllChange() {
+      if (this.machine_id.length !== 0) {
+        this.machine_id = []
+      }
       this.$refs.multipleTable.toggleAllSelection()
       this.isIndeterminate = false
+    },
+    // 点击购买
+    shopping() {
+      this.buy.machine_ids = this.machine_id.join(',')
+      this.$http.post('/buy', JSON.stringify(this.buy)).then(res => {
+        this.$router.push({
+          path: 'submitOrder',
+          query: { use: res.data }
+        })
+        console.log(this.$route.query.use)
+      })
     }
   }
 }
 </script>
 <style lang="less" scoped>
+header {
+  height: 280px;
+}
 #btn {
   position: absolute;
   z-index: 1500;

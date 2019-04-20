@@ -9,6 +9,7 @@ import PutRecord from '@/components/PutRecord'
 import Statistics from '@/components/Statistics'
 import MySettings from '@/components/MySettings'
 import Marketing from '@/components/Marketing'
+import SubmitOrder from '@/components/SubmitOrder'
 
 Vue.use(Router)
 
@@ -16,6 +17,7 @@ export default new Router({
   routes: [
     { path: '/login', component: Login },
     { path: '/machine', component: Machine },
+    { path: '/submitOrder', component: SubmitOrder },
     {
       path: '/personal',
       component: personal,
