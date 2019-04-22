@@ -17,7 +17,7 @@ export default new Router({
   routes: [
     { path: '/login', component: Login },
     { path: '/machine', component: Machine },
-    { path: '/submitOrder', component: SubmitOrder },
+    { path: '/submitOrder', name: 'submintOrder', component: SubmitOrder },
     {
       path: '/personal',
       component: personal,
