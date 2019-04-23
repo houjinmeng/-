@@ -140,15 +140,20 @@ export default {
     },
     // 多选框回调事件
     handleSelectionChange(val) {
-      for (let i = 0; i < val.length; i++) {
-        if (this.machine_id.indexOf(val[i].machine_id) === -1) {
-          this.machine_id.push(val[i].machine_id)
-        } else {
-          let index = this.machine_id.indexOf(val[i].machine_id)
-          this.machine_id.splice(index, 1)
+      if (val.length === 0) {
+        this.machine_id = []
+      } else {
+        for (let i = 0; i < val.length; i++) {
+          if (this.machine_id.indexOf(val[i].machine_id) === -1) {
+            this.machine_id.push(val[i].machine_id)
+          } else if (val.length !== this.machine_id.length) {
+            this.machine_id = []
+            for (let i = 0; i < val.length; i++) {
+              this.machine_id.push(val[i].machine_id)
+            }
+          }
         }
       }
-      console.log(this.machine_id)
       let vlength = val.length
       this.checkAll = vlength === this.pagesize
       this.isIndeterminate = vlength > 0 && vlength < this.pagesize
@@ -165,11 +170,8 @@ export default {
     shopping() {
       this.buy.machine_ids = this.machine_id.join(',')
       this.$http.post('/buy', JSON.stringify(this.buy)).then(res => {
-        this.$router.push({
-          path: 'submitOrder',
-          query: { use: res.data }
-        })
-        console.log(this.$route.query.use)
+        window.sessionStorage.setItem('machine', JSON.stringify(res.data))
+        this.$router.push('/submitOrder')
       })
     }
   }

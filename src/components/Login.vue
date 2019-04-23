@@ -82,6 +82,7 @@ export default {
         console.log(res)
       })
     },
+    // 默认列表
     defaultList() {
       this.$router.push('/machine')
     }

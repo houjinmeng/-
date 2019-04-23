@@ -25,13 +25,13 @@
     </header>
     <el-form label-width="130px" class="demo-ruleForm">
       <el-form-item label="设备名称">
-        <el-input style="width:400px" v-model="getuse.machine_name"></el-input>
+        <el-input style="width:400px" v-model="getMachine.machine_name"></el-input>
       </el-form-item>
       <el-form-item label="投放地点">
-        <el-input style="width:400px" v-model="getuse.address"></el-input>
+        <el-input style="width:400px" v-model="getMachine.address"></el-input>
       </el-form-item>
       <el-form-item label="吸粉账号">
-        <el-select placeholder="请选择" v-model="value1">
+        <el-select placeholder="请选择" v-model="uploadData.type">
           <el-option
             v-for="item in options"
             :key="item.value"
@@ -40,16 +40,18 @@
           ></el-option>
         </el-select>
         <el-upload
+          :limit="1"
           name="img"
-          style="display: inline-block"
+          style="display: inline-block;margin-left:30px"
           class="editor-slide-upload"
           :data="uploadData"
-          action="http://192.168.1.144/ad/client/upload_qrcode"
+          action="/api/ad/client/upload_qrcode/"
           :on-success="handleAvatarSuccess"
           :before-upload="beforeAvatarUpload"
         >
-          <el-button type="primary" size="mini">上传二维码</el-button>
+          <el-button type="primary">上传二维码</el-button>
         </el-upload>
+        <img src="http://192.168.1.144/" alt class="wx">
       </el-form-item>
       <el-form-item label="二维码位置">
         <el-select placeholder="请选择" v-model="value2">
@@ -94,13 +96,28 @@
         </el-select>
         <el-input :readonly="true" style="width:190px" placeholder="建议素材格式：16:9或9:1"></el-input>
         <el-upload
+          name="pic"
+          style="display: inline-block;margin-left:30px"
+          class="editor-slide-upload"
+          :data="uploadData"
+          action="/api/ad/client/upload_pic"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
+          :multiple="true"
+        >
+          <el-button slot="trigger" size="small" type="primary">选择素材</el-button>
+          <el-button size="small" type="primary" @click="submitUpload">提交素材</el-button>
+        </el-upload>
+        <el-upload
+          name="img"
           style="display: inline-block"
           class="editor-slide-upload"
-          action="api/productLine/saveImgInfo.do"
+          :data="uploadbgm"
+          action="/api/ad/client/bgm/"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
           :multiple="true"
-          :show-file-list="true"
         >
-          <el-button size="small" type="primary">选择素材</el-button>
           <el-button size="small" type="primary">添加背景音乐</el-button>
         </el-upload>
         <span
@@ -157,36 +174,44 @@
 </template>
 <script>
 export default {
+  mounted() {
+    this.getMachine_id()
+  },
   data() {
     return {
-      uploadActionUrl: 'http://192.168.1.144/ad/client/upload_qrcode',
-      getuse: this.$route.query.use,
+      // 上传背景音乐
+      uploadbgm: {
+        token: '',
+        ad_id: []
+      },
+      // 获取用户已选设备信息
+      getMachine: {},
       // 上传二维码
       uploadData: {
         token: '',
-        type: '微信',
-        machine_arr: [11]
+        type: '',
+        machine_arr: []
       },
       // 吸粉账号类型下拉框数据
       options: [
         {
-          value: '',
+          value: '微信',
           label: '微信'
         },
         {
-          value: '1',
+          value: '公众号',
           label: '公众号'
         },
         {
-          value: '0',
+          value: '微博',
           label: '微博'
         },
         {
-          value: '2',
+          value: '抖音',
           label: '抖音'
         },
         {
-          value: '3',
+          value: '快手',
           label: '快手'
         }
       ],
@@ -256,6 +281,14 @@ export default {
     }
   },
   methods: {
+    submitUpload() {
+      // this.$refs.upload.submit()
+    },
+    // 获取用户已选设备信息
+    getMachine_id() {
+      this.getMachine = JSON.parse(window.sessionStorage.getItem('machine'))
+      this.uploadData.machine_arr = this.getMachine.machine_id.split(',')
+    },
     handleAvatarSuccess(res, file) {
       this.imgInfo = URL.createObjectURL(file.raw)
     },
@@ -272,7 +305,7 @@ export default {
     },
     submitForm() {
       this.$http
-        .post('/upload_qrcode', JSON.stringify(this.uploadData))
+        .post('/upload_video', JSON.stringify(this.uploadData))
         .then(res => {
           console.log(res)
         })
@@ -288,6 +321,12 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+.wx {
+  display: inline-block;
+  width: 120px;
+  height: 120px;
+  position: absolute;
+}
 .el-form {
   width: 800px;
   margin: 0 auto;
