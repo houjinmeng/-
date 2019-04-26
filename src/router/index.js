@@ -10,6 +10,7 @@ import Statistics from '@/components/Statistics'
 import MySettings from '@/components/MySettings'
 import Marketing from '@/components/Marketing'
 import SubmitOrder from '@/components/SubmitOrder'
+import aa from '@/components/aa'
 
 Vue.use(Router)
 
@@ -17,6 +18,7 @@ export default new Router({
   routes: [
     { path: '/login', component: Login },
     { path: '/machine', component: Machine },
+    { path: '/aa', component: aa },
     { path: '/submitOrder', name: 'submintOrder', component: SubmitOrder },
     {
       path: '/personal',
