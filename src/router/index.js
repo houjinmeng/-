@@ -17,8 +17,8 @@ Vue.use(Router)
 export default new Router({
   routes: [
     { path: '/login', component: Login },
-    { path: '/machine', component: Machine },
     { path: '/aa', component: aa },
+    { path: '/machine', component: Machine },
     { path: '/submitOrder', name: 'submintOrder', component: SubmitOrder },
     {
       path: '/personal',

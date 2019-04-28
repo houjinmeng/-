@@ -172,16 +172,119 @@
         <el-input style="width:200px" v-model.number="form.seconds"></el-input>秒
       </el-form-item>
       <div class="form-footer" style="margin-left:130px">
-        <p>素材总时长：{{400}}秒</p>
-        <p>素材总金额：{{600}}元</p>
-        <span>折后总金额：{{380}}元</span>
-        <el-tag type="success" style="margin-left:20px" @click="getPrice">优惠政策</el-tag>
-        <p style="font-size:20px">合计金额：{{380}}元</p>
+        <el-popover placement="right" width="100" trigger="click">
+          <p>素材总时长：{{total_time}}秒</p>
+          <p>素材总金额：{{allprice}}元</p>
+          <span>折后总金额：{{discounted_price}}元</span>
+          <el-button @click="getPrice" slot="reference">金额明细</el-button>
+        </el-popover>
+        <el-tag type="success" style="margin-left:20px" @click="dialogTableVisible = true">优惠政策</el-tag>
+        <p style="font-size:20px;margin-top:30px">合计金额：{{discounted_price}}元</p>
       </div>
       <el-form-item style="margin-top:30px;margin-left:20px">
         <el-button type="primary" @click="submitForm('ruleForm')">提交审核</el-button>
       </el-form-item>
     </el-form>
+    <!-- 优惠政策弹框 -->
+    <el-dialog :visible.sync="dialogTableVisible" width="30%">
+       <div class="box1 same" style="margin:0;padding-top:5px;flex:3">
+      <p id="samebg">广告时长单价</p>
+      <div style="width:300px">
+        <span>5秒/周：</span>
+        <span>
+          <input type="text" v-model="priceForm.five" oninput="value=value.replace(/[^\d]/g,'')"> 元
+        </span>
+      </div>
+      <div style="width:300px">
+        <span>15秒/周：</span>
+        <span>
+          <input type="text" v-model="priceForm.fifteen" oninput="value=value.replace(/[^\d]/g,'')"> 元
+        </span>
+      </div>
+      <div style="width:300px">
+        <span>30秒/周：</span>
+        <span>
+          <input type="text" v-model="priceForm.thirty" oninput="value=value.replace(/[^\d]/g,'')"> 元
+        </span>
+      </div>
+    </div>
+      <div class="box1 same" style="flex:3;padding-top:10px">
+        <p id="samebg">广告时长优惠</p>
+        <div style="width:340px">
+          <span>5-15秒：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.five_timeout"
+               readonly
+            > 元/秒
+          </span>
+        </div>
+        <div style="width:340px">
+          <span>15-30秒：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.fifteen_timeout"
+               readonly
+            > 元/秒
+          </span>
+        </div>
+        <div style="width:340px">
+          <span>30秒以上：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.thirty_time"
+               readonly
+            > 元/秒
+          </span>
+        </div>
+      </div>
+      <div class="box1 same" style="flex:4;padding-top:20px">
+        <p id="longbg">广告投放周期优惠</p>
+        <div style="width:360px">
+          <span>4周（一个月）：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.one_month_discount"
+               readonly
+            > %
+          </span>
+        </div>
+        <div style="width:360px">
+          <span>13周（3个月）：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.three_month_discount"
+               readonly
+            > %
+          </span>
+        </div>
+        <div style="width:360px">
+          <span>27周（6个月）：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.six_month_discount"
+               readonly
+            > %
+          </span>
+        </div>
+        <div style="width:360px">
+          <span>50周（一年）：</span>
+          <span>
+            <input
+              type="text"
+              v-model="priceForm.one_year_discount"
+              readonly
+            > %
+          </span>
+        </div>
+      </div>
+    </el-dialog>
     <!-- 底部 -->
     <footer id="foot">
       <div class="top_box">
@@ -218,9 +321,31 @@
 export default {
   mounted() {
     this.getMachine_id()
+    this.getoptions()
   },
   data() {
     return {
+      // 接收优惠政策数据
+      priceForm: {
+        five: '',
+        fifteen: '',
+        thirty: '',
+        five_timeout: '',
+        fifteen_timeout: '',
+        thirty_time: '',
+        one_month_discount: '',
+        three_month_discount: '',
+        six_month_discount: '',
+        one_year_discount: ''
+      },
+      // 优惠政策弹框显示隐藏
+      dialogTableVisible: false,
+      // 素材总时长
+      total_time: '',
+      // 素材总金额
+      allprice: '',
+      // 折后金额
+      discounted_price: '',
       // 第二组上传素材显示隐藏
       showupload: false,
       // 表单验证绑定
@@ -264,11 +389,6 @@ export default {
           { required: true, message: '请选择素材类型', trigger: 'change' }
         ],
         seconds: [
-          {
-            required: true,
-            message: '请填写每张图片显示秒数',
-            trigger: 'blur'
-          },
           { type: 'number', message: '显示秒数必须为数字值' }
         ]
       },
@@ -309,24 +429,7 @@ export default {
         }
       ],
       // 投放周数下拉数据
-      options1: [
-        {
-          value: '',
-          label: '1'
-        },
-        {
-          value: '1',
-          label: '2'
-        },
-        {
-          value: '0',
-          label: '3'
-        },
-        {
-          value: '2',
-          label: '4'
-        }
-      ],
+      options1: [],
       // 上传素材类型
       options2: [
         {
@@ -389,6 +492,12 @@ export default {
     }
   },
   methods: {
+    // 动态循环投放周数下拉框数据
+    getoptions() {
+      for (var i = 1; i <= 52; i++) {
+        this.options1[i - 1] = { value: i, label: i }
+      }
+    },
     // 计算价格
     getPrice() {
       if (this.showupload === true) {
@@ -418,7 +527,10 @@ export default {
       this.price.number = this.uploadData.machine_arr.length
       this.price.repeat_number = this.form.play_count
       this.$http.post('/count_price', JSON.stringify(this.price)).then(res => {
-        console.log(res)
+        this.allprice = res.data.amount_detail.price
+        this.total_time = res.data.amount_detail.total_time
+        this.discounted_price = res.data.amount_detail.discounted_price
+        this.priceForm = res.data.length_price
       })
     },
     // 图片上传事件
@@ -428,6 +540,7 @@ export default {
         let regex = /(.jpg|.jpeg|.gif|.png|.bmp)$/
         if (regex.test(fileName.toLowerCase())) {
           this.form.silder_image = file.url
+          this.$message.success('图片选择成功，请点击提交')
         } else {
           this.$message.error('请选择图片文件')
         }
@@ -446,6 +559,7 @@ export default {
         let regex = /(.jpg|.jpeg|.gif|.png|.bmp)$/
         if (regex.test(fileName.toLowerCase())) {
           this.form.silder_image = file.url
+          this.$message.success('图片选择成功，请点击提交')
         } else {
           this.$message.error('请选择图片文件')
         }
@@ -496,6 +610,11 @@ export default {
             that.uploadbgm.ad_id = res.data.ad_id
             that.length1 = res.data.ad_length
           }
+          if (res.status === 200) {
+            that.$message.success('素材提交成功')
+          } else {
+            that.$message.error('素材提交失败')
+          }
         })
     },
     // 自定义上传素材2
@@ -537,6 +656,11 @@ export default {
             that.uploadbgm.ad_id = res.data.ad_id
             that.length2 = res.data.ad_length
           }
+          if (res.status === 200) {
+            this.$message.success('素材提交成功')
+          } else {
+            this.$message.error('素材提交失败')
+          }
         })
     },
     // 上传素材的背景音乐
@@ -547,6 +671,11 @@ export default {
       upload.append('ad_id', this.uploadbgm.ad_id)
       this.$http.post('/bgm', upload).then(res => {
         this.uploadbgm.ad_id = []
+        if (res.status === 200) {
+          this.$message.success('背景音乐添加成功')
+        } else {
+          this.$message.error('背景音乐添加失败')
+        }
       })
     },
     // 获取用户已选设备信息
@@ -571,6 +700,28 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+ .box1 {
+    text-align: center;
+    box-sizing: border-box;
+    p {
+      width: 300px;
+      margin: 0 auto;
+      font-size: 25px;
+    }
+    div {
+      margin: 0 auto;
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    span {
+      font-size: 16px;
+    }
+    input {
+      height: 30px;
+      text-align: center;
+    }
+  }
 .wx {
   display: inline-block;
   width: 120px;

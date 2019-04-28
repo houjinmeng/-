@@ -58,7 +58,7 @@
     </footer>
     <!-- 点击登录弹出二维码 -->
     <div id="loginDialog" v-show="showLogin">
-      <img src alt>
+      <iframe src="../../static/weixin.html" frameborder="0" width="320" height="500" style="position:absolute;top:20%;left:39%;" sandbox="allow-scripts allow-top-navigation allow-same-origin"></iframe>
       <span id="close" @click="showLogin=false">×</span>
     </div>
   </div>
@@ -78,24 +78,14 @@ export default {
     //  登录
     login() {
       this.showLogin = true
-      this.$http.get('/wx_qrcode').then(res => {
-        console.log(res)
-      })
+      // this.$http.get('/wx_qrcode').then(res => {
+      //   console.log(res)
+      // })
     },
     // 默认列表
     defaultList() {
       this.$router.push('/machine')
     }
-    // // 微信登陆
-    // async InWeChat() {
-    //   this.dialogVisible = true
-    //   const res = await this.$http.get(
-    //     'http://192.168.1.144/ad/client/wx_qrcode'
-    //   )
-    //   console.log(res)
-    //   this.appid = res.data.appId
-    //   this.wx_url = res.data.wx_url
-    // }
   }
 }
 </script>
