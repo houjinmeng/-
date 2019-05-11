@@ -11,12 +11,12 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/api': {
-        //代理地址
-        target: 'http://192.168.1.144/', //需要代理的地址
-        changeOrigin: true, //是否跨域
+        // 代理地址
+        target: 'http://192.168.1.144/', // 需要代理的地址
+        changeOrigin: true, // 是否跨域
         secure: false,
         pathRewrite: {
-          '^/api': '/' //本身的接口地址没有 '/api' 这种通用前缀，所以要rewrite，如果本身有则去掉
+          '^/api': '/' // 本身的接口地址没有 '/api' 这种通用前缀，所以要rewrite，如果本身有则去掉
         }
       }
     },
@@ -32,7 +32,7 @@ module.exports = {
     // Use Eslint Loader?
     // If true, your code will be linted during bundling and
     // linting errors and warnings will be shown in the console.
-    useEslint: true,
+    useEslint: false,
     // If true, eslint errors and warnings will also be shown in the error overlay
     // in the browser.
     showEslintErrorsInOverlay: false,

@@ -53,6 +53,8 @@
       background
       layout="prev, pager, next"
       :total="this.tot"
+      :current-page="tableList.page"
+      :page-size="10"
     ></el-pagination>
     <!-- 预览素材对话框 -->
     <el-dialog title="素材预览" :visible.sync="dialogTableVisible" width="20%">
@@ -89,8 +91,8 @@ export default {
       value2: '',
       // 获取订单列表所需参数
       tableList: {
-        token: '',
-        page: '',
+        token: window.sessionStorage.getItem('token'),
+        page: 1,
         keyword: {
           machine_name: '',
           end_time: '',
@@ -117,8 +119,8 @@ export default {
       this.$http
         .post('/ad_qrcode', JSON.stringify(this.tableList))
         .then(res => {
-          this.tableData = res.data
-          this.tot = this.tableData.length
+          this.tableData = res.data.data
+          this.tot = res.data.count
         })
     },
     // 按需搜所

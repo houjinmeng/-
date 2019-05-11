@@ -51,6 +51,8 @@
         background
         layout="prev, pager, next"
         :total="this.tot"
+        :current-page="machineList.page"
+        :page-size="10"
       ></el-pagination>
     </div>
     <!-- 底部 -->
@@ -95,7 +97,7 @@ export default {
     return {
       // 点击购买要传的参
       buy: {
-        token: '',
+        token: window.sessionStorage.getItem('token'),
         machine_ids: ''
       },
       // 总记录数据条数
@@ -103,7 +105,7 @@ export default {
       // 获取列表数据要传的参
       machineList: {
         keywords: '',
-        page: ''
+        page: 1
       },
       // 接收设备列表数据
       tableData: [],
@@ -128,11 +130,12 @@ export default {
     },
     // 获取设备列表
     getMachineList() {
+      this.machineList.keywords = this.$route.query.keywords
       this.$http
         .post('/machine_list', JSON.stringify(this.machineList))
         .then(res => {
-          this.tableData = res.data
-          this.tot = this.tableData.length
+          this.tableData = res.data.data
+          this.tot = res.data.count
         })
     },
     getRowKeys(row) {
@@ -170,8 +173,13 @@ export default {
     shopping() {
       this.buy.machine_ids = this.machine_id.join(',')
       this.$http.post('/buy', JSON.stringify(this.buy)).then(res => {
-        window.sessionStorage.setItem('machine', JSON.stringify(res.data))
-        this.$router.push('/submitOrder')
+        if (res.data.status === 2) {
+          this.$message.error('请先绑定手机号！')
+          this.$router.push('/mySettings')
+        } else {
+          window.sessionStorage.setItem('machine', JSON.stringify(res.data))
+          this.$router.push('/submitOrder')
+        }
       })
     }
   }

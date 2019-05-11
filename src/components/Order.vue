@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="text-align:center">
     <!-- 头部搜索区域 -->
     <ul class="top_search">
       <li>
@@ -72,48 +72,80 @@
       </el-table-column>
     </el-table>
     <!-- 点击查看弹框 -->
-    <el-dialog :visible.sync="dialogTableVisible" width="20%" :modal="false">
-      <div>
-        <span>设备名称：</span>
-        <input type="text" readonly>
+    <el-dialog :visible.sync="dialogTableVisible" width="30%" :modal="false">
+      <div id="box">
+        <div>
+          <span>设备名称：</span>
+          <span>{{machine_name}}</span>
+        </div>
+        <div>
+          <span>投放地点：</span>
+          <span>{{address}}</span>
+        </div>
+        <div>
+          <span style="line-height: 100px">吸粉账号：</span>
+          <span style="line-height: 100px">{{showList.type}}</span>
+          <img :src="Url" alt>
+        </div>
+        <div>
+          <span>投放时间：</span>
+          <span>{{showList.start_time*1000|formatDate}}</span>至
+          <span>{{showList.end_time*1000|formatDate}}</span>
+        </div>
+        <div>
+          <span>连续播放次数：</span>
+          <span>{{showList.play_count}}次</span>
+        </div>
+        <div>
+          <span>每小时出现次数：</span>
+          <span>{{showList.repeat_number}}次</span>
+        </div>
+        <div>
+          <span>合计金额：</span>
+          <span>{{showList.order_amount}}元</span>
+        </div>
       </div>
-      <div>
-        <span>投放地点：</span>
-        <input type="text" readonly>
+    </el-dialog>
+    <!-- 点击支付弹窗 -->
+    <el-dialog :visible.sync="dialogTableVisible1" width="30%" :modal="false">
+      <div id="pay">
+        <div>订单金额：¥ {{order_amount}}</div>
+        <div>实付金额：¥ {{order_amount}}</div>
+        <el-button type="primary" @click="zhifuPay">支付宝支付</el-button>
+        <el-button type="success" style="margin-left:50px;" @click="weixin">微信支付</el-button>
       </div>
-      <div>
-        <span>吸粉账号：</span>
-        <select name id style="width:65px"></select>
-        <input type="text" readonly style="width:100px">
+    </el-dialog>
+    <!-- 数据分页展示 -->
+    <el-pagination
+      @current-change="handleCurrentChange"
+      background
+      layout="prev, pager, next"
+      :total="this.tot"
+      :current-page="tableList.page"
+      :page-size="10"
+    ></el-pagination>
+    <!-- 支付宝二维码弹窗 -->
+    <el-dialog :visible.sync="dialogTableVisible2" width="30%" :modal="false">
+      <div id="pay">
+        <h2>请扫码支付</h2>
+        <vue-qr :text="config.value" :size="200" :dotScale="1"></vue-qr>
       </div>
-      <div>
-        <span>投放时间：</span>
-        <input type="text" readonly style="width:75px">至
-        <input type="text" readonly style="width:75px">
-      </div>
-      <div>
-        <span>连续播放次数：</span>
-        <input type="text" readonly>
-      </div>
-      <div>
-        <span>每小时出现次数：</span>
-        <input type="text" readonly>
-      </div>
-      <div>
-        <span>合计金额：</span>
-        <input type="text" readonly>
-      </div>
-      <div>
-        <span>驳回原因：</span>
-        <input type="text" readonly>
+    </el-dialog>
+    <!-- 微信支付弹窗 -->
+    <el-dialog :visible.sync="dialogTableVisible2" width="30%" :modal="false">
+      <div id="pay">
+        <h2>请扫码支付</h2>
+        <vue-qr :text="config.value1" :size="200" :dotScale="1"></vue-qr>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import VueQr from 'vue-qr'
 import { formatDate } from '@/common/date.js' // 在组件中引用date.js
 export default {
+  components: { VueQr },
   mounted() {
     this.getOrderList()
   },
@@ -130,8 +162,23 @@ export default {
   },
   data() {
     return {
+      config: {
+        value: '', //显示的值、跳转的地址
+        value1: ''
+      },
+      // 二维码弹框
+      dialogTableVisible2: false,
+      // 接收要支付订单的id
+      payId: '',
       // 查看弹框隐藏显示
       dialogTableVisible: false,
+      // 支付弹框
+      dialogTableVisible1: false,
+      // 接收查看列表信息
+      showList: {},
+      machine_name: '',
+      address: '',
+      Url: '',
       // 记录数据总条数
       tot: 0,
       // 下拉日历的数据
@@ -156,8 +203,8 @@ export default {
       ],
       // 获取订单列表所需参数
       tableList: {
-        token: '',
-        page: '',
+        token: window.sessionStorage.getItem('token'),
+        page: 1,
         keyword: {
           start_time: '',
           end_time: '',
@@ -167,26 +214,84 @@ export default {
         }
       },
       // 接收列表数据
-      tableData: []
+      tableData: [],
+      // 订单金额
+      order_amount: ''
     }
   },
   methods: {
+    // 当前页码变化的回调处理
+    handleCurrentChange(arg) {
+      this.tableList.page = arg
+      // 根据变化后的页码重新获得数据
+      this.getCheckList()
+    },
+    // 支付
+    payDialog(uid) {
+      this.payId = uid
+      const data = {
+        token: window.sessionStorage.getItem('token'),
+        check_id: ''
+      }
+      data.check_id = uid
+      this.$http.post('/pay', JSON.stringify(data)).then(res => {
+        this.order_amount = res.data
+        this.dialogTableVisible1 = true
+      })
+    },
+    // 支付宝支付
+    zhifuPay() {
+      const data = {
+        token: this.tableList.token,
+        check_id: this.payId,
+        type_id: 1
+      }
+      this.$http.post('/ad_pay', JSON.stringify(data)).then(res => {
+        this.dialogTableVisible2 = true
+        this.dialogTableVisible1 = false
+        this.config.value = res.data
+      })
+    },
+    // 微信支付
+    weixin() {
+      const data = {
+        token: this.tableList.token,
+        check_id: this.payId,
+        type_id: 2
+      }
+      this.$http.post('/ad_pay', JSON.stringify(data)).then(res => {
+        this.dialogTableVisible2 = true
+        this.dialogTableVisible1 = false
+        this.config.value1 = res.data
+      })
+    },
     // 获取订单表格数据
     getOrderList() {
       this.$http
         .post('/order_list', JSON.stringify(this.tableList))
         .then(res => {
-          let data = res.data
+          let data = res.data.data
           data.forEach(e => {
             e.is_pay = e.is_pay === 1 ? '已支付' : '未支付'
           })
           this.tableData = data
-          this.tot = this.tableData.length
+          this.tot = res.data.count
         })
     },
     // 点击查看弹框
     showDialog(uid) {
-      this.dialogTableVisible = true
+      const data = {
+        token: this.tableList.token,
+        check_id: uid
+      }
+      this.$http.post('/order_detail', JSON.stringify(data)).then(res => {
+        const data = res.data
+        this.showList = res.data
+        this.machine_name = data.machine_name.join(';')
+        this.address = data.address.join(';')
+        this.Url = 'http://' + data.code
+        this.dialogTableVisible = true
+      })
     },
     // 按需搜所
     search() {
@@ -200,13 +305,25 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-// 点击查看对话框样式
-.el-dialog {
-  span {
-    display: inline-block;
-    width: 120px;
-    text-align: right;
+// 查看对话框样式
+#box {
+  font-size: 20px;
+  div {
+    display: flex;
+    justify-content: flex-start;
     margin-top: 10px;
+    img {
+      height: 100px;
+      width: 100px;
+      margin-left: 50px;
+    }
+  }
+}
+// 支付弹框样式
+#pay {
+  div {
+    font-size: 20px;
+    margin-bottom: 30px;
   }
 }
 </style>

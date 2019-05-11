@@ -52,7 +52,7 @@ export default {
       show1: false,
       // 所需参数
       tableList: {
-        token: '',
+        token: window.sessionStorage.getItem('token'),
         phone: '',
         verify: ''
       },
@@ -66,7 +66,7 @@ export default {
         .post('/phone_list', JSON.stringify(this.tableList))
         .then(res => {
           this.phone = res.data
-          if (this.phone === '') {
+          if (this.phone === null) {
             this.show2 = true
             this.show1 = false
           } else {
@@ -89,7 +89,10 @@ export default {
     // 保存
     keep() {
       this.$http.post('/verify', JSON.stringify(this.tableList)).then(res => {
-        console.log(res)
+        if(res.data.status===1){
+          this.$message.success('绑定成功！')
+          this.getphone()
+        }
       })
     }
   }

@@ -29,9 +29,10 @@
             appid: "wxc37f4d4e1fb89577",
             scope: "snsapi_login",//写死
             // redirect_uri:encodeURI(wx_url) ,
-            redirect_uri:encodeURI("http://192.168.1.114/#/login"),//前端接收code的地址(截取URL 发送code到后台)
+            redirect_uri:encodeURI("http://192.168.1.114/login"),//前端接收code的地址(截取URL 发送code到后台)
             // redirect_uri:encodeURI("http://192.168.1.144/ad/client/wx_login"),//前端接收code的地址(截取URL 发送code到后台)
-            style: "black"//二维码黑白风格
+            style: "black",//二维码黑白风格
+            response_type: 'code'
         });
     });
 </script>

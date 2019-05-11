@@ -60,13 +60,14 @@
           <el-button
             size="mini"
             style="background-color:#0e9692;color:#fff"
-            @click="showDialog(info.row.id)"
+            @click="showDialog(info.row)"
           >查看</el-button>
           <el-button
             size="mini"
-            style="background-color:#186fb2;color:#fff"
+            class="color"
             @click="payDialog(info.row.id)"
-            v-if="info.row.is_press===0"
+            :disabled="info.row.status === '审核驳回' || info.row.status === '审核成功' || info.row.is_press === 1"
+            v-bind:class="{colorChange:info.row.status === '审核驳回' || info.row.status === '审核成功' || info.row.is_press === 1}"
           >催办</el-button>
         </template>
       </el-table-column>
@@ -77,7 +78,48 @@
       background
       layout="prev, pager, next"
       :total="this.tot"
+      :current-page="tableList.page"
+      :page-size="10"
     ></el-pagination>
+    <!-- 点击查看弹框 -->
+    <el-dialog :visible.sync="dialogTableVisible" width="30%" :modal="false">
+      <div id="box">
+        <div>
+          <span>设备名称：</span>
+          <span>{{machine_name}}</span>
+        </div>
+        <div>
+          <span>投放地点：</span>
+          <span>{{address}}</span>
+        </div>
+        <div>
+          <span style="line-height: 100px">吸粉账号：</span>
+          <span style="line-height: 100px">{{showList.type}}</span>
+          <img :src="Url" alt>
+        </div>
+        <div>
+          <span>投放时间：</span>
+          <span>{{showList.start_time*1000|formatDate}}</span>至
+          <span>{{showList.end_time*1000|formatDate}}</span>
+        </div>
+        <div>
+          <span>连续播放次数：</span>
+          <span>{{showList.play_count}}次</span>
+        </div>
+        <div>
+          <span>每小时出现次数：</span>
+          <span>{{showList.repeat_number}}次</span>
+        </div>
+        <div>
+          <span>合计金额：</span>
+          <span>{{showList.order_amount}}元</span>
+        </div>
+        <div v-if="cause">
+          <span>驳回原因：</span>
+          <span>{{showList.explain}}</span>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -100,6 +142,13 @@ export default {
   },
   data() {
     return {
+      // 驳回原因有无
+      cause: false,
+      // 催办按钮
+      style: 'background-color:#186fb2;color:#fff',
+      real: false,
+      // 点击查看弹框
+      dialogTableVisible: false,
       // 总记录数据条数
       tot: 20,
       // 接收日历值
@@ -132,8 +181,8 @@ export default {
       ],
       // 获取订单列表所需参数
       tableList: {
-        token: '',
-        page: '',
+        token: window.sessionStorage.getItem('token'),
+        page: 1,
         keyword: {
           start_time: '',
           end_time: '',
@@ -143,11 +192,50 @@ export default {
         }
       },
       // 接收列表数据
-      tableData: []
+      tableData: [],
+      // 接收查看列表信息
+      showList: {},
+      machine_name: '',
+      address: '',
+      Url: ''
     }
   },
   methods: {
-    /**  数据分页相关1 */
+    // 点击催办
+    payDialog(uid) {
+      const data = {
+        token: this.tableList.token,
+        check_id: uid
+      }
+      this.$http.post('/check_press', JSON.stringify(data)).then(res => {
+        if (res.data.status === 1) {
+          this.$message.success('催办成功，尽快为您办理')
+          this.getCheckList()
+        } else {
+          this.$message.error('催办失败')
+        }
+      })
+    },
+    // 点击查看
+    showDialog(uid) {
+      const data = {
+        token: this.tableList.token,
+        check_id: uid.id
+      }
+      if (uid.status === '审核驳回') {
+        this.cause = true
+      } else {
+        this.cause = false
+      }
+      this.$http.post('/check_detail', JSON.stringify(data)).then(res => {
+        const data = res.data
+        this.showList = res.data
+        this.machine_name = data.machine_name.join(';')
+        this.address = data.address.join(';')
+        this.Url = 'http://' + data.code
+        this.dialogTableVisible = true
+      })
+    },
     // 当前页码变化的回调处理
     handleCurrentChange(arg) {
       this.tableList.page = arg
@@ -159,20 +247,20 @@ export default {
       this.$http
         .post('/check_list', JSON.stringify(this.tableList))
         .then(res => {
-          let data = res.data
+          let data = res.data.data
           data.forEach(e => {
             if (e.status === 0) {
-              e.status = '未审核'
+              e.status = '待审核'
             } else if (e.status === 1) {
               e.status = '审核中'
             } else if (e.status === 2) {
-              e.status = '审核失败'
+              e.status = '审核驳回'
             } else {
               e.status = '审核成功'
             }
           })
           this.tableData = data
-          this.tot = this.tableData.length
+          this.tot = res.data.count
         })
     },
     // 按需搜所
@@ -186,5 +274,28 @@ export default {
   }
 }
 </script>
-<style>
+<style lang="less" scoped>
+// 催办按钮样式
+.color {
+  background-color: #186fb2;
+  color: #fff;
+}
+.colorChange {
+  background-color: #ccc;
+  color: #fff;
+}
+// 查看对话框样式
+#box {
+  font-size: 20px;
+  div {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 10px;
+    img {
+      height: 100px;
+      width: 100px;
+      margin-left: 50px;
+    }
+  }
+}
 </style>

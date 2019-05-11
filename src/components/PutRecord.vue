@@ -60,19 +60,56 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 点击查看弹框 -->
+    <el-dialog :visible.sync="dialogTableVisible1" width="30%" :modal="false">
+      <div id="box">
+        <div>
+          <span>设备名称：</span>
+          <span>{{machine_name}}</span>
+        </div>
+        <div>
+          <span>投放地点：</span>
+          <span>{{address}}</span>
+        </div>
+        <div>
+          <span style="line-height: 100px">吸粉账号：</span>
+          <span style="line-height: 100px">{{showList.type}}</span>
+          <img :src="Url" alt>
+        </div>
+        <div>
+          <span>投放时间：</span>
+          <span>{{showList.start_time*1000|formatDate}}</span>至
+          <span>{{showList.end_time*1000|formatDate}}</span>
+        </div>
+        <div>
+          <span>连续播放次数：</span>
+          <span>{{showList.play_count}}次</span>
+        </div>
+        <div>
+          <span>每小时出现次数：</span>
+          <span>{{showList.repeat_number}}次</span>
+        </div>
+        <div>
+          <span>合计金额：</span>
+          <span>{{showList.order_amount}}元</span>
+        </div>
+      </div>
+    </el-dialog>
     <!-- 数据分页展示 -->
     <el-pagination
       @current-change="handleCurrentChange"
       background
       layout="prev, pager, next"
       :total="this.tot"
+      :current-page="tableList.page"
+      :page-size="10"
     ></el-pagination>
     <!-- 预览素材对话框 -->
     <el-dialog title="素材预览" :visible.sync="dialogTableVisible">
       <img
         style="width:50%;height:50%"
         v-for="item in imgData"
-        :src="'http://192.168.1.144'+item"
+        :src="item"
         v-show="imgFlag"
         :key="item.index"
       >
@@ -80,12 +117,39 @@
         :key="item.index"
         v-for="item in videoData"
         v-show="videoFlag"
-        :src="'http://192.168.1.144'+item"
+        :src="item"
         preload
         height="300px"
         width="50%"
         controls
       ></video>
+    </el-dialog>
+    <!-- 再次投放 -->
+    <el-dialog title="请选择时间" :visible.sync="dialogTableVisible2" width="30%">
+      <ul class="top_search" style="margin-bottom:50px">
+        <li class="rili">
+          <div class="block">
+            <span class="demonstration">投放时间：</span>
+            <el-date-picker
+              v-model="value3"
+              type="date"
+              placeholder="开始时间"
+              value-format="timestamp"
+            ></el-date-picker>
+          </div>
+          <div class="block">
+            <span class="demonstration">至</span>
+            <el-date-picker
+              v-model="value4"
+              type="date"
+              placeholder="结束时间"
+              value-format="timestamp"
+            ></el-date-picker>
+          </div>
+        </li>
+      </ul>
+      <el-button type="info" style="margin-left:150px" @click="dialogTableVisible2=false">取消投放</el-button>
+      <el-button type="success" @click="putAgain">确定投放</el-button>
     </el-dialog>
   </div>
 </template>
@@ -109,6 +173,10 @@ export default {
   },
   data() {
     return {
+      // 再次投放
+      dialogTableVisible2: false,
+      // 查看对话框
+      dialogTableVisible1: false,
       // 预览对话框显示隐藏
       dialogTableVisible: false,
       // 总记录数据条数
@@ -116,10 +184,12 @@ export default {
       // 下拉日历的数据
       value1: '',
       value2: '',
+      value3: '',
+      value4: '',
       // 获取订单列表所需参数
       tableList: {
-        token: '',
-        page: '',
+        token: window.sessionStorage.getItem('token'),
+        page: 1,
         keyword: {
           machine_name: '',
           end_time: '',
@@ -133,7 +203,19 @@ export default {
       imgData: [],
       videoData: [],
       imgFlag: false,
-      videoFlag: false
+      videoFlag: false,
+      // 接收查看列表信息
+      showList: {},
+      machine_name: '',
+      address: '',
+      Url: '',
+      // 再次投放
+      put: {
+        token: window.sessionStorage.getItem('token'),
+        check_id: '',
+        start_time: '',
+        end_time: ''
+      }
     }
   },
   methods: {
@@ -149,8 +231,8 @@ export default {
       this.$http
         .post('/check_history', JSON.stringify(this.tableList))
         .then(res => {
-          this.tableData = res.data
-          this.tot = this.tableData.length
+          this.tableData = res.data.data
+          this.tot = res.data.count
         })
     },
     // 按需搜所
@@ -179,9 +261,61 @@ export default {
           this.videoData.push(uid[i])
         }
       }
+    },
+    // 点击查看弹框
+    showDialog(uid) {
+      const data = {
+        token: this.tableList.token,
+        check_id: uid
+      }
+      this.$http
+        .post('/check_history_detail', JSON.stringify(data))
+        .then(res => {
+          const data = res.data
+          this.showList = res.data
+          this.machine_name = data.machine_name
+          this.address = data.address
+          this.Url = data.qrocde
+          this.dialogTableVisible1 = true
+        })
+    },
+    // 再次投放
+    payDialog(uid) {
+      this.value3 = ''
+      this.value4 = ''
+      this.dialogTableVisible2 = true
+      this.put.check_id = uid
+    },
+    // 确定再次投放
+    putAgain() {
+      this.put.start_time = this.value3 / 1000
+      this.put.end_time = this.value4 / 1000
+      this.$http
+        .post('/check_history_again', JSON.stringify(this.put))
+        .then(res => {
+          if (res.data.status === 1) {
+            this.$message.success('投放成功！')
+          } else {
+            this.$message.error('投放失败！')
+          }
+        })
     }
   }
 }
 </script>
-<style>
+<style lang="less" scoped>
+// 查看对话框样式
+#box {
+  font-size: 20px;
+  div {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 10px;
+    img {
+      height: 100px;
+      width: 100px;
+      margin-left: 50px;
+    }
+  }
+}
 </style>
