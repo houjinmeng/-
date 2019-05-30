@@ -9,24 +9,30 @@
       >
         <!-- 左侧logo部分 -->
         <div>
-          <a href class="left">
-            <div class="left logo"></div>
+          <a class="left" @click="gohome">
+            <div class="left logo">
+              <img src="../assets/img/logo.png" alt="" width="80px;heiht:40px">
+            </div>
             <div>
-              <p style="font-size:20px">快乐平方</p>
-              <p class="Eglish_name">Happy square</p>
+              <p style="font-size:20px;margin-top:20px">哇咔传媒</p>
+              <p class="Eglish_name">Waka media</p>
             </div>
           </a>
           <span class="left line">|</span>
-          <p class="right" style="margin-top:12px">中国领先的广告商</p>
+          <p class="right" style="margin-top:30px">中国领先的广告商</p>
         </div>
         <!-- 右侧登录注册 -->
-        <div class="btn">登录 / 注册</div>
+        <div class="btn" @click="login" v-show="Login">首页</div>
+        <div class="btn" v-show="Person">
+          <span @click="person" style="margin-right:20px">欢迎：{{username}}</span>
+          <el-button type="primary" @click="outlogin">退出登录</el-button>
+        </div>
       </div>
     </header>
     <!-- 中间表格 -->
     <div>
       <div id="btn">
-        <el-button size="small">返回</el-button>
+        <el-button size="small" @click="gohome">返回</el-button>
         <el-button size="small" @click="handleCheckAllChange">全选</el-button>
       </div>
       <el-table
@@ -56,7 +62,7 @@
       ></el-pagination>
     </div>
     <!-- 底部 -->
-    <footer id="foot">
+    <footer id="foot" style="margin-top:160px">
       <div class="top_box">
         <ul>
           <li>
@@ -81,7 +87,7 @@
         </ul>
       </div>
       <div class="bot_box">
-        <p>Copyright © 2014-2019北京快乐平方有限公司版权所有</p>
+        <p>Copyright © 2014-2019北京哇咔哇咔科技有限公司版权所有</p>
         <p>网站备案号：京ICP备11111111-1 电话：5555555555 电子邮箱：5555@555.com</p>
       </div>
     </footer>
@@ -92,16 +98,32 @@
 export default {
   mounted() {
     this.getMachineList()
+    if (this.buy.token !== null) {
+      this.Login = false
+      this.Person = true
+    }
   },
   data() {
     return {
+      // 截取code
+      getQueryString(name) {
+        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i')
+        var r = window.location.search.substr(1).match(reg)
+        if (r !== null) return r[2]
+        return null
+      },
+      // 用户名
+      username: window.sessionStorage.getItem('user'),
+      // 登录状态
+      Login: true,
+      Person: false,
       // 点击购买要传的参
       buy: {
         token: window.sessionStorage.getItem('token'),
         machine_ids: ''
       },
       // 总记录数据条数
-      tot: 20,
+      tot: 10,
       // 获取列表数据要传的参
       machineList: {
         keywords: '',
@@ -119,6 +141,25 @@ export default {
     }
   },
   methods: {
+     // 退出登录
+    outlogin(){
+      window.sessionStorage.removeItem('token')
+      window.sessionStorage.removeItem('user')
+      location.href= 'http://www.wakamedia.cn'
+    },
+    // 点击logo返回首页
+    gohome() {
+      this.$router.push('/')
+    },
+    // 点击进入个人中心
+    person() {
+      this.$router.push('/personal')
+    },
+    //  登录
+    login() {
+      this.$message.success('前往首页登录')
+      this.$router.push('/')
+    },
     /**  数据分页相关1 */
     // 当前页码变化的回调处理
     handleCurrentChange(arg) {
@@ -173,6 +214,11 @@ export default {
     shopping() {
       this.buy.machine_ids = this.machine_id.join(',')
       this.$http.post('/buy', JSON.stringify(this.buy)).then(res => {
+        if (this.buy.token == null) {
+          this.$message.warning('请先登录账号')
+          this.$router.push('/')
+          return false
+        }
         if (res.data.status === 2) {
           this.$message.error('请先绑定手机号！')
           this.$router.push('/mySettings')

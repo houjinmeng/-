@@ -4,20 +4,27 @@
     <ul class="top_search">
       <li>
         设备名称：
-        <input type="text" v-model="tableList.keyword.machine_name">
+        <input type="text" v-model="tableList.keyword.machine_name" placeholder="请输入设备名称">
       </li>
       <li>
         设备地点：
-        <input type="text" v-model="tableList.keyword.machine_address">
+        <input type="text" v-model="tableList.keyword.machine_address" placeholder="请输入设备地点">
       </li>
       <li class="rili">
         <div class="block">
           <span class="demonstration">投放时间：</span>
-          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp" :editable='false'></el-date-picker>
         </div>
         <div class="block">
           <span class="demonstration">至</span>
-          <el-date-picker v-model="value2" type="date" placeholder="结束时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker
+            v-model="value2"
+            type="date"
+            placeholder="结束时间"
+            value-format="timestamp"
+            :picker-options="pickerOptions"
+            :editable='false'
+          ></el-date-picker>
         </div>
       </li>
       <li>
@@ -143,6 +150,12 @@ export default {
   },
   data() {
     return {
+      // 限制投放结束日期
+      pickerOptions: {
+        disabledDate: time => {
+          return time.getTime() < this.value1
+        }
+      },
       // 预览素材
       videoData: [],
       imgData: [],
@@ -155,7 +168,7 @@ export default {
       // 查看弹框
       dialogTableVisible: false,
       // 总记录数据条数
-      tot: 20,
+      tot: 10,
       // 下拉日历的数据
       value1: '',
       value2: '',
@@ -186,7 +199,7 @@ export default {
       this.imgData = []
       this.videoData = []
       this.dialogTableVisible1 = true
-      const data = this.tableData1[0].item2_ad
+      const data = this.tableData1[1].item1_ad
       for (let i = 0; i < data.length; i++) {
         let fileName = data[i].lastIndexOf('.')
         let fileNameLength = data[i].length
@@ -206,7 +219,7 @@ export default {
       this.imgData = []
       this.videoData = []
       this.dialogTableVisible2 = true
-      const data = this.tableData1[0].ad[1].split(',')
+      const data = this.tableData1[0].item2_ad
       for (let i = 0; i < data.length; i++) {
         let fileName = data[i].lastIndexOf('.')
         let fileNameLength = data[i].length
@@ -227,7 +240,7 @@ export default {
       this.look.machine_id = uid.machine_id
       this.$http.post('/play_detail', JSON.stringify(this.look)).then(res => {
         this.dialogTableVisible = true
-        this.tableData1 = res.data
+        this.tableData1 = res.data.data
       })
     },
     /**  数据分页相关1 */
@@ -235,7 +248,7 @@ export default {
     handleCurrentChange(arg) {
       this.tableList.page = arg
       // 根据变化后的页码重新获得数据
-      this.getPutlist()
+      this.getList()
     },
     // 获取表格数据
     getList() {
@@ -246,6 +259,10 @@ export default {
     },
     // 按需搜所
     search() {
+      if (this.value1.length !== 0 && this.value2.length === 0) {
+        this.$message.warning('请选择结束日期')
+        return false
+      }
       this.tableList.keyword.start_time = this.value1 / 1000
       this.tableList.keyword.end_time = this.value2 / 1000
       this.getList()

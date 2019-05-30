@@ -5,8 +5,13 @@
 html,
 body,
 #app,
-ul {
+ul,
+input {
   height: 100%;
+  font-family: '微软雅黑';
+}
+button {
+  font-family: '微软雅黑';
 }
 .left {
   float: left;
@@ -29,25 +34,24 @@ i.iconfont {
   color: white;
   text-decoration: none;
   display: block;
-  width: 100px;
+  width: 170px;
   margin-right: 10px;
-  margin-left: 50px;
+  margin-left: 20px;
+  cursor: pointer;
 }
 #head a .logo {
-  width: 20px;
-  height: 40px;
-  background-color: #fff;
+  margin-right: 10px;
 }
 #head a .Eglish_name {
-  font-size: 8px;
+  font-size: 12px;
 }
 #head .line {
   font-size: 25px;
   margin-right: 10px;
-  margin-top: 4px;
+  margin-top: 25px;
 }
 #head .btn {
-  font-size: 15px;
+  font-size: 18px;
   margin-right: 100px;
   cursor: pointer;
 }
@@ -77,11 +81,11 @@ i.iconfont {
 }
 #foot ul li {
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 10px;
 }
 #foot ul li:first-child {
-  font-size: 15px;
+  font-size: 18px;
 }
 #foot .bot_box {
   text-align: center;

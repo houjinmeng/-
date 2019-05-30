@@ -52,8 +52,7 @@ var router = new Router({
         }
       ]
     }
-  ],
-  mode: 'history' // mode 设置为history ，去掉地址栏上的 # 号
+  ]
 })
 // 给路由设置“导航守卫”
 // 在守卫中对token进行监听，有token就让执行，否则跳转到登录页去

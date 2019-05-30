@@ -1,23 +1,27 @@
 <template>
   <div>
     <!-- 头部 -->
-    <header id="head" style="height:100px">
+    <header id="head" style="height:80px">
       <!-- 左侧logo部分 -->
       <div>
         <a href class="left">
-          <div class="left logo"></div>
+          <div class="left logo">
+            <img src="../assets/img/logo.png" alt="" width="80px;heiht:40px">
+          </div>
           <div>
-            <p style="font-size:20px">快乐平方</p>
-            <p class="Eglish_name">Happy square</p>
+            <p style="font-size:20px;margin-top:20px">哇咔传媒</p>
+            <p class="Eglish_name">Waka media</p>
           </div>
         </a>
         <span class="left line">|</span>
-        <p class="right" style="margin-top:12px">中国领先的广告商</p>
+        <p class="right" style="margin-top:30px">中国领先的广告商</p>
       </div>
       <!-- 右侧登录注册 -->
-      <!-- <router-link class="btn" to ref="login_btn" tag="button" @click.native="login">登录</router-link> -->
       <div class="btn" @click="login" v-show="Login">登录</div>
-      <div class="btn" @click="person" v-show="Person">欢迎！{{username}}</div>
+      <div class="btn" v-show="Person">
+        <span @click="person" style="margin-right:20px">欢迎：{{username}}</span>
+        <el-button type="primary" @click="outlogin">退出登录</el-button>
+      </div>
     </header>
     <!-- 中间内容 -->
     <div class="content">
@@ -25,7 +29,7 @@
       <div>
         <input type="text" placeholder="请输入城市，设备名称，商场" v-model="keywords">
         <button class="search" @click="search">搜索</button>
-        <button class="list" @click="defaultList">默认列表</button>
+        <button class="list" @click="defaultList">可用设备</button>
       </div>
     </div>
     <!-- 底部 -->
@@ -54,14 +58,14 @@
         </ul>
       </div>
       <div class="bot_box">
-        <p>Copyright © 2014-2019北京快乐平方有限公司版权所有</p>
+        <p>Copyright © 2014-2019北京哇咔哇咔科技有限公司版权所有</p>
         <p>网站备案号：京ICP备11111111-1 电话：5555555555 电子邮箱：5555@555.com</p>
       </div>
     </footer>
     <!-- 点击登录弹出二维码 -->
     <div id="login" v-show="showLogin">
-      <div id="login_container" align="center" style="margin-top:100px"></div>
-      <div id="close" @click="showLogin=false">X</div>
+      <div id="login_container" align="center" style="margin-top:200px;"></div>
+      <div id="close" @click="showLogin=false" class="el-icon-close"></div>
     </div>
   </div>
 </template>
@@ -71,30 +75,40 @@ import '../assets/js/wxLogin.js'
 export default {
   name: 'TopHeader',
   mounted() {
-    let code = this.getQueryString('code')
-    if (code === null) {
-      return false
+    if (window.sessionStorage.getItem('token') === null) {
+      let data = {
+        code: '',
+        type: 'open'
+      }
+      data.code = this.getQueryString('code')
+      if (data.code === null) {
+        return false
+      } else {
+        this.$http.post('/wx_login', JSON.stringify(data)).then(res => {
+          // 通过浏览器的sessionStorage记录服务器返回的token信息
+          window.sessionStorage.setItem('token', res.data.token)
+          window.sessionStorage.setItem('user', res.data.nick)
+          this.username = window.sessionStorage.getItem('user')
+          this.Login = false
+          this.Person = true
+          if (res.data.status == 0) {
+            this.$message.error(res.data.errmsg)
+          } else if (res.data.status == 2) {
+            this.$router.push('/mySettings')
+          } else if (res.data.status == 1) {
+            this.$message.success('登录成功！')
+          }
+        })
+      }
     } else {
-      this.$http.post('/wx_login', { code: code }).then(res => {
-        // 通过浏览器的sessionStorage记录服务器返回的token信息
-        window.sessionStorage.setItem('token', res.data.token)
-        this.username = res.data.nick
-        console.log(this.username)
-        this.Login = false
-        this.Person = true
-        if (res.data.status == 0) {
-          alert(res.data.errmsg)
-        } else if (res.data.status == 2) {
-          this.$router.push('/mySettings')
-        } else if (res.data.status == 1) {
-          this.$message.success('登录成功！')
-        }
-      })
+      this.username = window.sessionStorage.getItem('user')
+      this.Login = false
+      this.Person = true
     }
   },
   data() {
     return {
-      // 用户名
+      // 已登录用户名
       username: '',
       // 登录状态
       Login: true,
@@ -108,8 +122,14 @@ export default {
     }
   },
   methods: {
+     // 退出登录
+    outlogin(){
+      window.sessionStorage.removeItem('token')
+      window.sessionStorage.removeItem('user')
+      location.href= 'http://www.wakamedia.cn'
+    },
     // 点击进入个人中心
-    person(){
+    person() {
       this.$router.push('/personal')
     },
     // 搜索
@@ -136,7 +156,8 @@ export default {
           scope: 'snsapi_login', // 写死
           redirect_uri: encodeURI(res.data.wx_url), // 前端接收code的地址(截取URL 发送code到后台)
           style: 'black', // 二维码黑白风格
-          response_type: 'code'
+          response_type: 'code',
+          href:'data:text/css;base64,QGNoYXJzZXQgIlVURi04IjsNCi5pbXBvd2VyQm94IC5xcmNvZGUge3dpZHRoOiAxODBweDt9DQouaW1wb3dlckJveCAudGl0bGUge2NvbG9yOiAjZmZmICFpbXBvcnRhbnR9DQouaW1wb3dlckJveCAuaW5mbyB7d2lkdGg6IDIwMHB4O2NvbG9yOiAjZmZmO2ZvbnQtc2l6ZTogMTJweH0NCi5zdGF0dXNfaWNvbiB7ZGlzcGxheTogbm9uZX0NCi5pbXBvd2VyQm94IC5zdGF0dXMge3RleHQtYWxpZ246IGNlbnRlcjtjb2xvcjogI2ZmZn0g'
         })
       })
     },
@@ -194,6 +215,7 @@ export default {
       position: absolute;
       left: 484px;
       cursor: pointer;
+      color: #fff;
     }
     .list {
       width: 112px;
@@ -203,6 +225,7 @@ export default {
       position: absolute;
       right: 16px;
       cursor: pointer;
+      color: #fff;
     }
   }
 }
@@ -210,17 +233,17 @@ export default {
 #login {
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   position: absolute;
   left: 0px;
   top: 0px;
   z-index: 1000;
   #close {
     position: absolute;
-    font-size: 78px;
+    font-size: 40px;
     color: #fff;
-    right: 180px;
-    top: 70px;
+    right: 50px;
+    top: 30px;
     cursor: pointer;
   }
 }

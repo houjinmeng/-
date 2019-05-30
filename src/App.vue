@@ -10,5 +10,4 @@ export default {
 </script>
 
 <style>
-@import url('./assets/style/base.less');
 </style>

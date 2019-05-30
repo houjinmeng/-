@@ -2,10 +2,10 @@
   <div>
     <!-- 绑定手机号页 -->
     <div class="box" v-if="show2">
-      <el-form :model="tableList" status-icon :rules="rules" ref="ruleForm" label-width="100px">
+      <el-form :model="tableList" :rules="rules" ref="ruleForm" label-width="100px">
         <el-form-item label="绑定手机号：" prop="phone">
-          <el-input v-model.number="tableList.phone" style="width:180px"/>
-          <el-button @click="getCode" style="margin-left:30px" type="primary">获取验证码</el-button>
+          <el-input v-model.number="tableList.phone" style="width:180px" clearable maxlength="11"/>
+          <el-button @click="getCode" style="margin-left:30px" type="primary" id="btn">获取验证码</el-button>
         </el-form-item>
         <el-form-item label="验证码：">
           <el-input v-model="tableList.verify" clearable style="width:180px"/>
@@ -34,7 +34,6 @@ export default {
         return callback(new Error('手机号不能为空'))
       } else {
         const reg = /^1[3|4|5|7|8][0-9]\d{8}$/
-        console.log(reg.test(value))
         if (reg.test(value)) {
           callback()
         } else {
@@ -82,6 +81,27 @@ export default {
     },
     // 获取验证码
     getCode() {
+      if (this.tableList.phone == '') {
+        this.$message.warning('手机号不能为空')
+        return false
+      }
+      var obj = document.getElementById('btn')
+      var wait = 60
+      time(obj)
+      function time(obj) {
+        if (wait == 0) {
+          obj.removeAttribute('disabled')
+          obj.innerHTML = '获取验证码'
+          wait = 60
+        } else {
+          obj.setAttribute('disabled', true)
+          obj.innerHTML = wait + '秒后重新发送'
+          wait--
+          setTimeout(function() {
+            time(obj)
+          }, 1000)
+        }
+      }
       this.$http.post('/binding', JSON.stringify(this.tableList)).then(res => {
         console.log(res)
       })
@@ -89,9 +109,11 @@ export default {
     // 保存
     keep() {
       this.$http.post('/verify', JSON.stringify(this.tableList)).then(res => {
-        if(res.data.status===1){
+        if (res.data.status === 1) {
           this.$message.success('绑定成功！')
           this.getphone()
+        } else {
+          this.$message.error('保存失败，请重新绑定')
         }
       })
     }
@@ -101,7 +123,7 @@ export default {
 <style lang="less" scoped>
 .box {
   position: absolute;
-  top: 45%;
+  top: 60%;
   left: 50%;
   transform: translate(-50%, -50%);
 }

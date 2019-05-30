@@ -4,7 +4,7 @@
     <ul class="top_search">
       <li>
         审核状态：
-        <el-select placeholder="请选择" v-model="tableList.keyword.status">
+        <el-select placeholder="请选择" v-model="tableList.keyword.status" style="width:110px">
           <el-option
             v-for="item in options"
             :key="item.value"
@@ -16,21 +16,35 @@
       <li class="rili">
         <div class="block">
           <span class="demonstration">投放时间：</span>
-          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp" :editable='false'></el-date-picker>
         </div>
         <div class="block">
           <span class="demonstration">至</span>
-          <el-date-picker v-model="value2" type="date" placeholder="结束时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker
+            v-model="value2"
+            type="date"
+            placeholder="结束时间"
+            value-format="timestamp"
+            :picker-options="pickerOptions"
+            :editable='false'
+          ></el-date-picker>
         </div>
       </li>
       <li class="rili">
         <div class="block">
           <span class="demonstration">创建时间：</span>
-          <el-date-picker v-model="value3" type="date" placeholder="开始时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker v-model="value3" type="date" placeholder="开始时间" value-format="timestamp" :editable='false'></el-date-picker>
         </div>
         <div class="block">
           <span class="demonstration">至</span>
-          <el-date-picker v-model="value4" type="date" placeholder="结束时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker
+            v-model="value4"
+            type="date"
+            placeholder="结束时间"
+            value-format="timestamp"
+            :picker-options="pickerOptions1"
+            :editable='false'
+          ></el-date-picker>
         </div>
       </li>
       <li>
@@ -41,7 +55,7 @@
     <el-table :data="tableData" stripe style="width: 100%">
       <el-table-column label="序号" type="index" width="150" align="center"></el-table-column>
       <el-table-column prop="machine_name" label="设备名称" width="150" align="center"></el-table-column>
-      <el-table-column prop="machine_address" label="设备地点" align="center"></el-table-column>
+      <el-table-column prop="machine_address" label="设备地点" align="center" width="300"></el-table-column>
       <el-table-column label="投放时间" align="center">
         <template slot-scope="info">
           <span>{{info.row.start_time*1000|formatDate}}</span>-
@@ -142,15 +156,24 @@ export default {
   },
   data() {
     return {
+      // 限制投放结束日期
+      pickerOptions: {
+        disabledDate: time => {
+          return time.getTime() < this.value1
+        }
+      },
+      // 限制投放结束日期
+      pickerOptions1: {
+        disabledDate: time => {
+          return time.getTime() < this.value3
+        }
+      },
       // 驳回原因有无
       cause: false,
-      // 催办按钮
-      style: 'background-color:#186fb2;color:#fff',
-      real: false,
       // 点击查看弹框
       dialogTableVisible: false,
       // 总记录数据条数
-      tot: 20,
+      tot: 10,
       // 接收日历值
       value1: '',
       value2: '',
@@ -164,7 +187,7 @@ export default {
         },
         {
           value: '0',
-          label: '未审核'
+          label: '待审核'
         },
         {
           value: '1',
@@ -265,6 +288,14 @@ export default {
     },
     // 按需搜所
     search() {
+      if (this.value1.length !== 0 && this.value2.length === 0) {
+        this.$message.warning('请选择投放结束日期')
+        return false
+      }
+      if (this.value3.length !== 0 && this.value4.length === 0) {
+        this.$message.warning('请选择创建结束日期')
+        return false
+      }
       this.tableList.keyword.start_time = this.value1 / 1000
       this.tableList.keyword.end_time = this.value2 / 1000
       this.tableList.keyword.create_start_time = this.value3 / 1000

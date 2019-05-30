@@ -9,20 +9,26 @@
       >
         <!-- 左侧logo部分 -->
         <div>
-          <a href="javascript:void(0)" class="left">
-            <div class="left logo"></div>
+          <a @click="gohome" class="left">
+            <div class="left logo">
+              <img src="../assets/img/logo.png" alt width="80px;heiht:40px">
+            </div>
             <div>
-              <p style="font-size:20px">快乐平方</p>
-              <p class="Eglish_name">Happy square</p>
+              <p style="font-size:20px;margin-top:20px">哇咔传媒</p>
+              <p class="Eglish_name">Waka media</p>
             </div>
           </a>
           <span class="left line">|</span>
-          <p class="right" style="margin-top:12px">中国领先的广告商</p>
+          <p class="right" style="margin-top:30px">中国领先的广告商</p>
         </div>
         <!-- 右侧登录注册 -->
-        <div class="btn">登录 / 注册</div>
+        <div class="btn">
+          <span @click="person" style="margin-right:20px">欢迎：{{username}}</span>
+          <el-button type="primary" @click="outlogin">退出登录</el-button>
+        </div>
       </div>
     </header>
+    <!-- form表单 -->
     <el-form
       label-width="140px"
       :model="ruleForm"
@@ -48,7 +54,7 @@
         <!-- 上传二维码 -->
         <el-upload
           class="avatar-uploader"
-          action="/api/ad/client/upload_qrcode/"
+          action="http://192.168.1.144/ad/client/upload_qrcode"
           :show-file-list="false"
           :on-success="handleAvatarSuccess"
           :before-upload="beforeAvatarUpload"
@@ -78,13 +84,14 @@
           ></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="投开始时间" prop="valuedata">
+      <el-form-item label="投放开始时间" prop="valuedata">
         <el-date-picker
           type="date"
           placeholder="选择日期"
           value-format="timestamp"
           v-model="ruleForm.valuedata"
           :picker-options="pickerOptions"
+          :editable="false"
         ></el-date-picker>投放周数
         <el-select placeholder="请选择" v-model="ruleForm.valueweek">
           <el-option
@@ -123,8 +130,9 @@
           :auto-upload="false"
           :show-file-list="false"
           :on-change="imgPreview"
-          :limit="10"
+          :limit="ruleForm.valueimg==0?10:1"
           :on-exceed="maxnumber"
+          :file-list="fileList"
         >
           <el-button slot="trigger" type="primary">选择素材</el-button>
           <el-button type="primary" @click="submitUpload">提交素材</el-button>
@@ -141,36 +149,40 @@
         >
           <el-button type="primary">添加背景音乐</el-button>
         </el-upload>
-        <span
-          style="font-size:48px;color:blue;height:30px;line-height:25px;cursor: pointer;"
-          @click="add"
-          v-show="additem"
-        >+</span>
+        <span @click="add" class="add" v-show="additem">+</span>
       </el-form-item>
-      <!-- 展示已选择的素材 -->
-      <div id="showList">
-        <div>
-          <img
-            style="width:200px;height:200px"
-            v-for="item in Data"
-            :src="item"
-            :v-if="imgFlag"
-            :key="item.index"
-          >
-          <video
-            :key="item.index"
-            v-for="item in Data1"
-            :v-if="videoFlag"
-            :src="item"
-            preload
-            height="100%"
-            width="50%"
-            controls
-          ></video>
+      <!-- 展示已选择的素材1 -->
+      <div id="showbox" @mouseenter="onMouseover2" @mouseleave="onMouseout2">
+        <div class="el-icon-arrow-left up" @click="goleft" v-show="movebtn"></div>
+        <div class="el-icon-arrow-right down" @click="goright" v-show="movebtn"></div>
+        <div id="showList" v-show="showList">
+          <div id="imglist" ref="imgList">
+            <div
+              v-for="(item,k) in Data"
+              :key="k"
+              style="width:200px;height:200px"
+              class="left everyimg"
+              @mouseenter="onMouseover(k)"
+              @mouseleave="onMouseout(k)"
+            >
+              <el-button
+                type="primary"
+                icon="el-icon-delete"
+                class="delete"
+                v-show="k===delbtn"
+                @click="delimg(k)"
+              ></el-button>
+              <img style="width:200px;height:200px" :src="item.src" :v-if="imgFlag">
+            </div>
+          </div>
+          <div v-if="videoFlag" style="width:400px;height:200px" class="videobox">
+            <el-button type="primary" icon="el-icon-delete" class="delvideo" @click="delvideo"></el-button>
+            <video :src="Data1.ad_address" preload height="100%" width="100%" controls></video>
+          </div>
         </div>
       </div>
       <!-- 可选的第二组素材 -->
-      <el-form-item label="上传素材(2)" v-show="showupload">
+      <el-form-item label="上传素材(2)" v-if="showupload">
         <!-- 上传图片或视频下拉选择框 -->
         <el-select placeholder="请选择" style="width:100px" v-model="ruleForm.valueimg2">
           <el-option
@@ -191,7 +203,7 @@
           :auto-upload="false"
           :show-file-list="false"
           :on-change="imgPreview1"
-          :limit="10"
+          :limit="ruleForm.valueimg2==0?10:1"
           :on-exceed="maxnumber"
         >
           <el-button slot="trigger" type="primary">选择素材</el-button>
@@ -210,8 +222,38 @@
           <el-button type="primary">添加背景音乐</el-button>
         </el-upload>
       </el-form-item>
-      <el-form-item label="每张图片显示秒数" prop="seconds">
-        <el-input style="width:200px" v-model.number="ruleForm.seconds"></el-input>秒
+      <!-- 展示已选择的素材2 -->
+      <div id="showbox" @mouseenter="onMouseover3" @mouseleave="onMouseout3">
+        <div class="el-icon-arrow-left up" @click="goleft1" v-show="movebtn1"></div>
+        <div class="el-icon-arrow-right down" @click="goright1" v-show="movebtn1"></div>
+        <div id="showList" v-show="showList1">
+          <div id="imglist" ref="imgList2">
+            <div
+              v-for="(item,k) in Data2"
+              :key="k"
+              style="width:200px;height:200px"
+              class="left everyimg"
+              @mouseenter="onMouseover1(k)"
+              @mouseleave="onMouseout1(k)"
+            >
+              <el-button
+                type="primary"
+                icon="el-icon-delete"
+                class="delete"
+                v-show="k===delbtn1"
+                @click="delimg1(k)"
+              ></el-button>
+              <img style="width:200px;height:200px" :src="item.src" :v-if="imgFlag1">
+            </div>
+            <div v-if="videoFlag1" style="width:400px;height:200px" class="videobox">
+              <el-button type="primary" icon="el-icon-delete" class="delvideo" @click="delvideo1"></el-button>
+              <video :src="Data3.ad_address" preload height="100%" width="100%" controls></video>
+            </div>
+          </div>
+        </div>
+      </div>
+      <el-form-item label="每张图片显示秒数" prop="seconds" v-if="imgTime">
+        <el-input style="width:200px" v-model.number="ruleForm.seconds" v-on:input="watchinput"></el-input>秒
       </el-form-item>
       <div class="form-footer" style="margin-left:140px">
         <el-popover placement="right" width="100" trigger="click">
@@ -309,7 +351,7 @@
     </el-dialog>
     <!-- 提交弹框 -->
     <el-dialog title="提交成功" :visible.sync="centerDialogVisible" width="30%" center>
-      <span>请及时关注短信通知，审核成功后请尽快完成支付。</span>
+      <div style="text-align:center">请及时关注短信通知，审核成功后请尽快完成支付。</div>
     </el-dialog>
     <!-- 底部 -->
     <footer id="foot">
@@ -337,7 +379,7 @@
         </ul>
       </div>
       <div class="bot_box">
-        <p>Copyright © 2014-2019北京快乐平方有限公司版权所有</p>
+        <p>Copyright © 2014-2019北京哇咔哇咔科技有限公司版权所有</p>
         <p>网站备案号：京ICP备11111111-1 电话：5555555555 电子邮箱：5555@555.com</p>
       </div>
     </footer>
@@ -353,15 +395,36 @@ export default {
   },
   data() {
     return {
+      movebtn1: false,
+      movebtn: false,
+      mark: 0,
+      mark1: 0,
+      count: '', //提交审核后倒计时
+      // 删除按钮
+      delbtn: '',
+      delbtn1: '',
+      // 接收已上传素材id
+      matterId: [],
+      // 图片显示时间选填
+      imgTime: false,
+      // 素材展示
+      showList: false,
+      showList1: false,
+      // 已登录用户名
+      username: window.sessionStorage.getItem('user'),
       // 添加素材按钮
       additem: false,
       // 二维码
       imageUrl: '',
       imgFlag: false,
       videoFlag: false,
+      imgFlag1: false,
+      videoFlag1: false,
       // 展示上传素材
       Data: [],
-      Data1: [],
+      Data1: {},
+      Data2: [],
+      Data3: {},
       // 提交弹框
       centerDialogVisible: false,
       // 限制投放日期
@@ -527,15 +590,11 @@ export default {
         repeat_number: '',
         number: ''
       },
-      // 接收视频时长，图片数量
+      // 接收视频时长
       length1: '',
-      pic_number1: '',
       length2: '',
-      pic_number2: '',
       // 比较时长的数组
       maxlength: [],
-      // 所有投放素材的id
-      allmatter: [],
       // 提交审核
       submitcheck: {
         token: window.sessionStorage.getItem('token'),
@@ -551,10 +610,178 @@ export default {
         location: '',
         length: ''
       },
-      fileList: [],
+      fileList: []
     }
   },
+  // 页面销毁，删除为提交审核的素材
+  destroyed() {
+    const data = {
+      token: window.sessionStorage.getItem('token'),
+      ad_id: this.matterId
+    }
+    this.$http.post('/delete_upload', JSON.stringify(data)).then(res => {})
+  },
   methods: {
+    // 监听实时获取价格
+    watchinput() {
+      setTimeout(() => {
+        this.getPrice()
+      }, 1500)
+    },
+    // 点击进入个人中心
+    person() {
+      this.$router.push('/personal')
+    },
+    // 点击logo返回首页
+    gohome() {
+      this.$router.push('/')
+    },
+    // 退出登录
+    outlogin() {
+      window.sessionStorage.removeItem('token')
+      window.sessionStorage.removeItem('user')
+      location.href = 'http://www.wakamedia.cn'
+    },
+    // 素材1图片展示左右移动
+    goleft() {
+      if (this.mark === 0) {
+        this.$message.warning('已经是第一张了')
+        return false
+      }
+      this.$refs.imgList.style.left = -200 * this.mark + 200 + 'px'
+      this.mark--
+    },
+    goright() {
+      if (this.Data.length > 3) {
+        if (this.mark >= this.Data.length - 3) {
+          this.$message.warning('已经是最后一张了！')
+          return false
+        }
+        this.mark++
+        this.$refs.imgList.style.left = -200 * this.mark + 'px'
+      }
+    },
+    // 素材2图片展示左右移动
+    goleft1() {
+      if (this.mark1 === 0) {
+        this.$message.warning('已经是第一张了')
+        return false
+      }
+      this.$refs.imgList2.style.left = -200 * this.mark1 + 200 + 'px'
+      this.mark1--
+    },
+    goright1() {
+      if (this.Data2.length > 3) {
+        if (this.mark1 >= this.Data2.length - 3) {
+          this.$message.warning('已经是最后一张了！')
+          return false
+        }
+        this.mark1++
+        this.$refs.imgList2.style.left = -200 * this.mark1 + 'px'
+      }
+    },
+    // 删除上传的素材1
+    delimg(k) {
+      const data = {
+        token: window.sessionStorage.getItem('token'),
+        ad_id: this.Data[k].id
+      }
+      this.$http.post('/delete_upload', JSON.stringify(data)).then(res => {
+        if (res.data.status === 1) {
+          let index = this.matterId.indexOf(this.Data[k].id)
+          this.matterId.splice(index, 1)
+          this.$message.success('删除素材成功')
+          this.Data.splice(k, 1)
+          if (this.Data.length == 0) {
+            this.showList = false
+          }
+        }
+      })
+    },
+    delvideo() {
+      const data = {
+        token: window.sessionStorage.getItem('token'),
+        ad_id: this.Data1.ad_id
+      }
+      this.$http.post('/delete_upload', JSON.stringify(data)).then(res => {
+        if (res.data.status === 1) {
+          let index = this.matterId.indexOf(this.Data1.ad_id)
+          this.matterId.splice(index, 1)
+          this.$message.success('删除素材成功')
+          this.showList = false
+          this.videoFlag = false
+        }
+      })
+    },
+    // 删除上传的素材2
+    delimg1(k) {
+      const data = {
+        token: window.sessionStorage.getItem('token'),
+        ad_id: this.Data2[k].id
+      }
+      this.$http.post('/delete_upload', JSON.stringify(data)).then(res => {
+        if (res.data.status === 1) {
+          let index = this.matterId.indexOf(this.Data2[k].id)
+          this.matterId.splice(index, 1)
+          this.$message.success('删除素材成功')
+          this.Data2.splice(k, 1)
+          if (this.Data2.length == 0) {
+            this.showList1 = false
+          }
+        }
+      })
+    },
+    delvideo1() {
+      const data = {
+        token: window.sessionStorage.getItem('token'),
+        ad_id: this.Data3.ad_id
+      }
+      this.$http.post('/delete_upload', JSON.stringify(data)).then(res => {
+        if (res.data.status === 1) {
+          let index = this.matterId.indexOf(this.Data3.ad_id)
+          this.matterId.splice(index, 1)
+          this.$message.success('删除素材成功')
+          this.showList1 = false
+          this.videoFlag1 = false
+        }
+      })
+    },
+    // 素材1展示鼠标进入离开事件
+    onMouseover(k) {
+      this.delbtn = k
+    },
+    onMouseout() {
+      this.delbtn = ''
+    },
+    // 素材2展示鼠标进入离开事件
+    onMouseover1(k) {
+      this.delbtn1 = k
+    },
+    onMouseout1() {
+      this.delbtn1 = ''
+    },
+    // 展示素材1左右按钮显示隐藏
+    onMouseover2() {
+      if (this.Data.length > 3) {
+        this.movebtn = true
+      }
+    },
+    onMouseout2() {
+      this.movebtn = false
+    },
+    // 展示素材2左右按钮显示隐藏
+    onMouseover3() {
+      if (this.Data2.length > 3) {
+        this.movebtn1 = true
+      }
+    },
+    onMouseout3() {
+      this.movebtn1 = false
+    },
+    // 点击进入个人中心
+    person() {
+      this.$router.push('/personal')
+    },
     // 优惠政策
     discounts() {
       this.getPrice()
@@ -567,14 +794,42 @@ export default {
     },
     // 上传图片最大限制
     maxnumber(files, fileList) {
-      this.$message.error('最多上传十张')
-      fileList = []
+      if (this.ruleForm.valueimg === '0' || this.ruleForm.valueimg2 === '0') {
+        this.$message.error('最多上传十张图片素材！！')
+        fileList = []
+      } else {
+        this.$message.error('最多上传一个视频素材')
+        fileList = []
+      }
+    },
+    //提交审核3秒后进入跳转页面
+    clickJump() {
+      const timejump = 3
+      if (!this.timer) {
+        this.count = timejump
+        this.show = false
+        this.timer = setInterval(() => {
+          if (this.count > 0 && this.count <= timejump) {
+            this.count--
+          } else {
+            this.show = true
+            clearInterval(this.timer)
+            this.timer = null
+            //跳转的页面写在此处
+            this.$router.push('/check')
+          }
+        }, 1000)
+      }
     },
     // 提交审核
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          this.submitcheck.ad_id = this.allmatter.join(',')
+          if (this.matterId.length === 0) {
+            this.$message.warning('请确认是否已成功提交素材')
+            return false
+          }
+          this.submitcheck.ad_id = this.matterId.join(',')
           this.submitcheck.machine_id = this.getMachine.machine_id
           this.submitcheck.play_count = this.ruleForm.ad_count
           this.submitcheck.repeat_number = this.ruleForm.play_count
@@ -585,10 +840,14 @@ export default {
             .post('/submit_audit', JSON.stringify(this.submitcheck))
             .then(res => {
               if (res.data.status === 1) {
+                this.clickJump()
                 this.centerDialogVisible = true
+              } else {
+                this.$message.error('提交审核失败，请重新提交！')
               }
             })
         } else {
+          this.$message.warning('请完善订单信息')
           return false
         }
       })
@@ -602,22 +861,22 @@ export default {
     // 计算价格
     getPrice() {
       if (this.showupload === true) {
-        if (this.length1 === '') {
-          let len = this.pic_number1 * this.ruleForm.seconds
+        if (this.ruleForm.valueimg === '0') {
+          let len = this.Data.length * this.ruleForm.seconds
           this.maxlength.push(len)
         } else {
           this.maxlength.push(this.length1)
         }
-        if (this.length2 === '') {
-          let len = this.pic_number2 * this.ruleForm.seconds
+        if (this.ruleForm.valueimg2 === '0') {
+          let len = this.Data2.length * this.ruleForm.seconds
           this.maxlength.push(len)
         } else {
           this.maxlength.push(this.length2)
         }
         this.price.length = Math.max.apply(null, this.maxlength)
       } else {
-        if (this.length1 === '') {
-          this.price.length = this.pic_number1 * this.ruleForm.seconds
+        if (this.ruleForm.valueimg === '0') {
+          this.price.length = this.ruleForm.seconds * this.Data.length
         } else {
           this.price.length = this.length1
         }
@@ -642,7 +901,7 @@ export default {
       this.formmatter.silderimgList = []
       if (this.ruleForm.valueimg === '0') {
         let fileName = file.name
-        let regex = /(.jpg|.jpeg|.gif|.png|.bmp)$/
+        let regex = /(.jpg|.jpeg|.gif|.png|.bmp|.tif|.psd|.dng|.cr2|.nef)$/
         if (regex.test(fileName.toLowerCase())) {
           this.$message.success('图片选择成功，请点击提交')
           this.fileList.push(file)
@@ -657,7 +916,7 @@ export default {
         }
       } else if (this.ruleForm.valueimg === '1') {
         let fileName = file.name
-        let regex = /(.mp4)$/
+        let regex = /(.mp4|.AVI|.mov|.rmvb|.rm|.FLV|.3GP)$/
         if (regex.test(fileName.toLowerCase())) {
           const isLt2M = file.size / 1024 / 1024 < 200
           if (!isLt2M) {
@@ -683,11 +942,10 @@ export default {
     },
     // 素材选择事件2
     imgPreview1(file) {
-      this.fileList = []
       this.formmatter.silderimgList = []
       if (this.ruleForm.valueimg2 === '0') {
         let fileName = file.name
-        let regex = /(.jpg|.jpeg|.gif|.png|.bmp)$/
+        let regex = /(.jpg|.jpeg|.gif|.png|.bmp|.tif|.psd|.dng|.cr2|.nef)$/
         if (regex.test(fileName.toLowerCase())) {
           this.ruleForm.silder_image = file.url
           this.$message.success('图片选择成功，请点击提交')
@@ -703,7 +961,7 @@ export default {
         }
       } else if (this.ruleForm.valueimg2 === '1') {
         let fileName = file.name
-        let regex = /(.mp4)$/
+        let regex = /(.mp4|.AVI|.mov|.rmvb|.rm|.FLV|.3GP)$/
         if (regex.test(fileName.toLowerCase())) {
           const isLt2M = file.size / 1024 / 1024 < 200
           if (!isLt2M) {
@@ -732,7 +990,15 @@ export default {
       let url = ''
       let name = ''
       let that = this
-      if (that.ruleForm.valueimg === '0' || that.ruleForm.valueimg2 === '0') {
+      if (that.Data.length > 10) {
+        that.$message.warning('最多上传十张图片素材')
+        return false
+      }
+      if (that.Data1.length >= 1) {
+        that.$message.warning('最多上传一个视频素材')
+        return false
+      }
+      if (that.ruleForm.valueimg === '0') {
         url = '/upload_pic'
         name = `pic[]`
       } else {
@@ -756,24 +1022,42 @@ export default {
           },
           data: formData
         })
-        .then(function(res) {
+        .then(res => {
           if (res.status === 200) {
-            that.$message.success('素材提交成功')
+            that.fileList = []
             that.additem = true
-            formData = new FormData()
+            that.showList = true
+            if (res.data.error == null) {
+              that.$message.success('素材提交成功')
+            } else {
+              that.$message.warning(res.data.error)
+            }
             if (that.ruleForm.valueimg === '0') {
+              that.imgTime = true
               that.uploadbgm.ad_id = res.data.ad_id.join(',')
-              that.allmatter = that.allmatter.concat(res.data.ad_id)
-              that.pic_number1 = res.data.ad_id.length
-              that.Data = that.Data.concat(res.data.ad_address)
+              for (var i = 0; i < res.data.ad_address.length; i++) {
+                if (that.Data.length === 10 || that.Data.length > 10) {
+                  that.$message.warning('上传的图片素材已到达最大数量10张')
+                  break
+                } else {
+                  let obj = {
+                    src: res.data.ad_address[i],
+                    id: res.data.ad_id[i]
+                  }
+                  that.Data.push(obj)
+                }
+              }
+              that.$refs.imgList.style.width = that.Data.length * 200 + 'px'
               that.imgFlag = true
+              that.matterId = that.matterId.concat(res.data.ad_id)
             } else if (that.ruleForm.valueimg === '1') {
               that.uploadbgm.ad_id = res.data.ad_id
               that.length1 = res.data.ad_length
-              that.allmatter.push(res.data.ad_id)
-              that.Data1.push(res.data.ad_address)
+              that.Data1 = res.data
               that.videoFlag = true
+              that.matterId.push(res.data.ad_id)
             }
+            that.getPrice()
           } else {
             that.$message.error('素材提交失败')
           }
@@ -784,6 +1068,14 @@ export default {
       let url = ''
       let name = ''
       let that = this
+      if (that.Data2.length > 10) {
+        that.$message.warning('最多上传十张图片素材')
+        return false
+      }
+      if (that.Data3.length >= 1) {
+        that.$message.warning('最多上传一个视频素材')
+        return false
+      }
       if (that.ruleForm.valueimg2 === '0') {
         url = '/upload_pic'
         name = `pic[]`
@@ -809,17 +1101,39 @@ export default {
         })
         .then(function(res) {
           if (res.status === 200) {
-            that.$message.success('素材提交成功')
-            formData = new FormData()
+            that.fileList = []
+            that.showList1 = true
+            if (res.data.error == null) {
+              that.$message.success('素材提交成功')
+            } else {
+              that.$message.warning(res.data.error)
+            }
             if (that.ruleForm.valueimg2 === '0') {
+              that.imgTime = true
               that.uploadbgm.ad_id = res.data.ad_id.join(',')
-              that.pic_number2 = res.data.ad_id.length
-              that.allmatter = that.allmatter.concat(res.data.ad_id)
+              for (var i = 0; i < res.data.ad_address.length; i++) {
+                if (that.Data2.length === 10 || that.Data2.length > 10) {
+                  that.$message.warning('上传的图片素材已到达最大数量10张')
+                  break
+                } else {
+                  let obj = {
+                    src: res.data.ad_address[i],
+                    id: res.data.ad_id[i]
+                  }
+                  that.Data2.push(obj)
+                }
+              }
+              that.$refs.imgList2.style.width = that.Data2.length * 200 + 'px'
+              that.imgFlag1 = true
+              that.matterId = that.matterId.concat(res.data.ad_id)
             } else {
               that.uploadbgm.ad_id = res.data.ad_id
               that.length2 = res.data.ad_length
-              that.allmatter.push(res.data.ad_id)
+              that.Data3 = res.data
+              that.videoFlag1 = true
+              that.matterId.push(res.data.ad_id)
             }
+            that.getPrice()
           } else {
             that.$message.error('素材提交失败')
           }
@@ -847,27 +1161,47 @@ export default {
     },
     // 上传二维码成功回调
     handleAvatarSuccess(res, file) {
-      this.imageUrl = URL.createObjectURL(file.raw)
-      this.submitcheck.qrcode_id = res.qrcode_id.join(',')
-      this.$message.success('上传二维码成功！')
+      if (res.qrcode_id === undefined) {
+        this.$message.error('二维码上传失败，请重新上传')
+      } else {
+        this.imageUrl = URL.createObjectURL(file.raw)
+        this.submitcheck.qrcode_id = res.qrcode_id.join(',')
+        this.$message.success('上传二维码成功！')
+      }
     },
     // 上传二维码前回调
     beforeAvatarUpload(file) {
       if (this.ruleForm.account == '') {
         this.$message.error('请先选择吸粉账号类型')
         return false
+      } else {
+        this.uploadData.type = this.ruleForm.account
+        let fileName = file.name
+        let regex = /(.jpg|.jpeg|.gif|.png|.bmp|.tif|.psd|.dng|.cr2|.nef)$/
+        if (regex.test(fileName.toLowerCase())) {
+          const isLt2M = file.size / 1024 / 1024 < 2
+          if (!isLt2M) {
+            this.$message.error('上传图片大小不能超过 2MB!')
+          }
+          return isLt2M
+        } else {
+          this.$message.error('请选择正确格式的图片文件')
+          return false
+        }
       }
-      this.uploadData.type = this.ruleForm.account
-      const isLt2M = file.size / 1024 / 1024 < 2
-      if (!isLt2M) {
-        this.$message.error('上传图片大小不能超过 2MB!')
-      }
-      return isLt2M
     }
   }
 }
 </script>
 <style lang="less" scoped>
+// 添加第二组素材
+.add {
+  font-size: 48px;
+  color: #409eff;
+  cursor: pointer;
+  position: absolute;
+  top: -5px;
+}
 // 优惠政策弹窗
 .box1 {
   text-align: center;
@@ -898,9 +1232,59 @@ export default {
   margin-top: 30px;
 }
 // 展示已选素材
-#showList {
-  width: 800px;
-  height: 200px;
-  overflow: hidden;
+#showbox {
+  width: 100%;
+  position: relative;
+  .up {
+    position: absolute;
+    left: 5%;
+    top: 40%;
+    font-size: 50px;
+    color: #fff;
+    z-index: 1000;
+    background-color: rgb(204, 204, 204);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .down {
+    position: absolute;
+    right: 10%;
+    top: 40%;
+    font-size: 50px;
+    color: #fff;
+    z-index: 1000;
+    background-color: rgb(204, 204, 204);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  #showList {
+    width: 600px;
+    height: 200px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    margin-left: 100px;
+    position: relative;
+    #imglist {
+      position: absolute;
+    }
+    .everyimg {
+      position: relative;
+      .delete {
+        position: absolute;
+        left: 40%;
+        top: 40%;
+      }
+    }
+    .videobox {
+      width: 400px;
+      height: 200px;
+      position: relative;
+      .delvideo {
+        position: absolute;
+        right: -15%;
+        bottom: 0;
+      }
+    }
+  }
 }
 </style>

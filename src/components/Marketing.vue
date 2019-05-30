@@ -4,20 +4,27 @@
     <ul class="top_search">
       <li>
         设备名称：
-        <input type="text" v-model="tableList.keyword.machine_name">
+        <input type="text" v-model="tableList.keyword.machine_name" placeholder="请输入设备名称">
       </li>
       <li>
         设备地点：
-        <input type="text" v-model="tableList.keyword.machine_address">
+        <input type="text" v-model="tableList.keyword.machine_address" placeholder="请输入设备地点">
       </li>
       <li class="rili">
         <div class="block">
           <span class="demonstration">投放时间：</span>
-          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp" :editable='false'></el-date-picker>
         </div>
         <div class="block">
           <span class="demonstration">至</span>
-          <el-date-picker v-model="value2" type="date" placeholder="结束时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker
+            v-model="value2"
+            type="date"
+            placeholder="结束时间"
+            value-format="timestamp"
+            :picker-options="pickerOptions"
+            :editable='false'
+          ></el-date-picker>
         </div>
       </li>
       <li>
@@ -37,7 +44,7 @@
       </el-table-column>
       <el-table-column prop="type" label="营销号类型" align="center"></el-table-column>
       <el-table-column prop="click" label="被扫描次数" align="center"></el-table-column>
-      <el-table-column label="投放素材" align="center">
+      <el-table-column label="二维码" align="center">
         <template slot-scope="info">
           <el-button
             size="mini"
@@ -56,8 +63,8 @@
       :current-page="tableList.page"
       :page-size="10"
     ></el-pagination>
-    <!-- 预览素材对话框 -->
-    <el-dialog title="素材预览" :visible.sync="dialogTableVisible" width="20%">
+    <!-- 预览二维码对话框 -->
+    <el-dialog title="二维码预览" :visible.sync="dialogTableVisible" width="20%">
       <img :src="code" alt>
     </el-dialog>
   </div>
@@ -82,10 +89,16 @@ export default {
   },
   data() {
     return {
+      // 限制投放结束日期
+      pickerOptions: {
+        disabledDate: time => {
+          return time.getTime() < this.value1
+        }
+      },
       // 预览对话框显示隐藏
       dialogTableVisible: false,
       // 总记录数据条数
-      tot: 20,
+      tot: 10,
       // 下拉日历的数据
       value1: '',
       value2: '',
@@ -125,6 +138,10 @@ export default {
     },
     // 按需搜所
     search() {
+      if (this.value1.length !== 0 && this.value2.length === 0) {
+        this.$message.warning('请选择结束日期')
+        return false
+      }
       this.tableList.keyword.start_time = this.value1 / 1000
       this.tableList.keyword.end_time = this.value2 / 1000
       this.getList()

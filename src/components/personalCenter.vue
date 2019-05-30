@@ -9,18 +9,23 @@
       >
         <!-- 左侧logo部分 -->
         <div>
-          <a href class="left">
-            <div class="left logo"></div>
+          <a href class="left" @click="tohome">
+            <div class="left logo">
+              <img src="../assets/img/logo.png" alt="" width="80px;heiht:40px">
+            </div>
             <div>
-              <p style="font-size:20px">快乐平方</p>
-              <p class="Eglish_name">Happy square</p>
+              <p style="font-size:20px;margin-top:20px">哇咔传媒</p>
+              <p class="Eglish_name">Waka media</p>
             </div>
           </a>
           <span class="left line">|</span>
-          <p class="right" style="margin-top:12px">中国领先的广告商</p>
+          <p class="right" style="margin-top:30px">中国领先的广告商</p>
         </div>
         <!-- 右侧登录注册 -->
-        <div class="btn">登录 / 注册</div>
+        <div class="btn">
+          <span @click="person" style="margin-right:20px">欢迎：{{username}}</span>
+          <el-button type="primary" @click="outlogin">退出登录</el-button>
+        </div>
       </div>
     </el-header>
     <!-- 中间部分 -->
@@ -52,7 +57,7 @@
       </el-main>
     </el-container>
     <!-- 底部 -->
-    <el-footer id="foot" style="height:210px">
+    <el-footer id="foot" style="height:210px;">
       <div class="top_box">
         <ul>
           <li>
@@ -77,7 +82,7 @@
         </ul>
       </div>
       <div class="bot_box">
-        <p>Copyright © 2014-2019北京快乐平方有限公司版权所有</p>
+        <p>Copyright © 2014-2019北京哇咔哇咔科技有限公司版权所有</p>
         <p>网站备案号：京ICP备11111111-1 电话：5555555555 电子邮箱：5555@555.com</p>
       </div>
     </el-footer>
@@ -88,6 +93,8 @@
 export default {
   data() {
     return {
+      // 已登录用户名
+      username: window.sessionStorage.getItem('user'),
       //  左侧导航菜单数据
       menuList: [
         {
@@ -162,13 +169,23 @@ export default {
         }
       ],
       // 设置左侧权限的图标
-      menuicon: [
-        'wodedingdan02',
-        'shenhe',
-        'JLTJ',
-        'shuju',
-        'shezhi'
-      ]
+      menuicon: ['wodedingdan02', 'shenhe', 'JLTJ', 'shuju', 'shezhi']
+    }
+  },
+  methods: {
+    // 点击进入个人中心
+    person() {
+      this.$router.push('/personal')
+    },
+    // 点击logo返回首页
+    tohome() {
+      this.$router.push('/')
+    },
+    // 退出登录
+    outlogin(){
+      window.sessionStorage.removeItem('token')
+      window.sessionStorage.removeItem('user')
+      location.href= 'http://www.wakamedia.cn'
     }
   }
 }
@@ -180,7 +197,6 @@ export default {
 }
 // 侧边导航样式
 .el-container {
-  height: 100%;
   .el-aside {
     background-color: #ccc;
     color: #333;
@@ -190,6 +206,10 @@ export default {
       border-right-width: 0;
       border-bottom: 1px solid#ccc;
     }
+  }
+  .el-main {
+    overflow-y: hidden;
+    height: 820px;
   }
 }
 </style>

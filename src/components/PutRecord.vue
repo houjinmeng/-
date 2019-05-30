@@ -4,20 +4,27 @@
     <ul class="top_search">
       <li>
         设备名称：
-        <input type="text" v-model="tableList.keyword.machine_name">
+        <input type="text" v-model="tableList.keyword.machine_name" placeholder="请输入设备名称">
       </li>
       <li>
         设备地点：
-        <input type="text" v-model="tableList.keyword.address">
+        <input type="text" v-model="tableList.keyword.address" placeholder="请输入设备地点">
       </li>
       <li class="rili">
         <div class="block">
           <span class="demonstration">投放时间：</span>
-          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker v-model="value1" type="date" placeholder="开始时间" value-format="timestamp" :editable='false'></el-date-picker>
         </div>
         <div class="block">
           <span class="demonstration">至</span>
-          <el-date-picker v-model="value2" type="date" placeholder="结束时间" value-format="timestamp"></el-date-picker>
+          <el-date-picker
+            v-model="value2"
+            type="date"
+            placeholder="结束时间"
+            value-format="timestamp"
+            :picker-options="pickerOptions"
+            :editable='false'
+          ></el-date-picker>
         </div>
       </li>
       <li>
@@ -135,16 +142,19 @@
               type="date"
               placeholder="开始时间"
               value-format="timestamp"
+              :editable='false'
             ></el-date-picker>
           </div>
           <div class="block">
-            <span class="demonstration">至</span>
-            <el-date-picker
-              v-model="value4"
-              type="date"
-              placeholder="结束时间"
-              value-format="timestamp"
-            ></el-date-picker>
+            <span class="demonstration">投放周数</span>
+            <el-select placeholder="请选择" v-model="valueweek">
+              <el-option
+                v-for="item in options1"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              ></el-option>
+            </el-select>
           </div>
         </li>
       </ul>
@@ -159,6 +169,7 @@ import { formatDate } from '@/common/date.js' // 在组件中引用date.js
 export default {
   mounted() {
     this.getPutlist()
+    this.getoptions()
   },
   // 时间戳过滤器
   filters: {
@@ -173,6 +184,15 @@ export default {
   },
   data() {
     return {
+      // 限制投放结束日期
+      pickerOptions: {
+        disabledDate: time => {
+          return time.getTime() < this.value1
+        }
+      },
+      // 投放周数下拉数据
+      options1: [],
+      valueweek: '',
       // 再次投放
       dialogTableVisible2: false,
       // 查看对话框
@@ -180,12 +200,11 @@ export default {
       // 预览对话框显示隐藏
       dialogTableVisible: false,
       // 总记录数据条数
-      tot: 20,
+      tot: 10,
       // 下拉日历的数据
       value1: '',
       value2: '',
       value3: '',
-      value4: '',
       // 获取订单列表所需参数
       tableList: {
         token: window.sessionStorage.getItem('token'),
@@ -219,6 +238,12 @@ export default {
     }
   },
   methods: {
+    // 动态循环投放周数下拉框数据
+    getoptions() {
+      for (var i = 1; i <= 52; i++) {
+        this.options1[i - 1] = { value: i, label: i }
+      }
+    },
     /**  数据分页相关1 */
     // 当前页码变化的回调处理
     handleCurrentChange(arg) {
@@ -237,6 +262,10 @@ export default {
     },
     // 按需搜所
     search() {
+      if (this.value1.length !== 0 && this.value2.length === 0) {
+        this.$message.warning('请选择结束日期')
+        return false
+      }
       this.tableList.keyword.start_time = this.value1 / 1000
       this.tableList.keyword.end_time = this.value2 / 1000
       this.getPutlist()
@@ -282,14 +311,13 @@ export default {
     // 再次投放
     payDialog(uid) {
       this.value3 = ''
-      this.value4 = ''
       this.dialogTableVisible2 = true
       this.put.check_id = uid
     },
     // 确定再次投放
     putAgain() {
       this.put.start_time = this.value3 / 1000
-      this.put.end_time = this.value4 / 1000
+      this.put.end_time = this.valueweek * 604800 + this.put.start_time
       this.$http
         .post('/check_history_again', JSON.stringify(this.put))
         .then(res => {
